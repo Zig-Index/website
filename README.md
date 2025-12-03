@@ -35,13 +35,13 @@ See the [registry README](https://github.com/Zig-Index/registry) for details.
 
 ```json
 {
-  "name": "your-package-name",
-  "owner": "github-username",
-  "repo": "repo-name",
-  "description": "Brief description",
-  "homepage": "https://docs-url.com",
+  "name": "logly",
+  "owner": "muhammad-fiaz",
+  "repo": "logly.zig",
+  "description": "High-performance, structured logging library for Zig.",
+  "homepage": "https://muhammad-fiaz.github.io/logly.zig",
   "license": "MIT",
-  "topics": ["networking", "async"]
+  "category": "development-tools"
 }
 ```
 
