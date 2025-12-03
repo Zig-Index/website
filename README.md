@@ -18,7 +18,7 @@ A curated registry for discovering Zig packages and applications.
 
 This is the main website repository. The registry data is maintained separately:
 
-- **Website**: https://github.com/Zig-Index/website (this repo)
+- **Website**: https://github.com/Zig-Index/zig-index.github.io (this repo)
 - **Registry**: https://github.com/Zig-Index/registry (submodule at `src/registry`)
 
 ## Add Your Project
@@ -56,8 +56,8 @@ See the [registry README](https://github.com/Zig-Index/registry) for details.
 
 ```bash
 # Clone with submodules
-git clone --recurse-submodules https://github.com/Zig-Index/website.git
-cd website
+git clone --recurse-submodules https://github.com/Zig-Index/zig-index.github.io.git
+cd zig-index.github.io
 
 # Or if already cloned, initialize submodules
 git submodule update --init --recursive

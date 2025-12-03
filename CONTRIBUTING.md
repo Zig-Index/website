@@ -71,7 +71,7 @@ Create a new file in the appropriate directory:
 
 For website improvements:
 
-1. Fork https://github.com/Zig-Index/website
+1. Fork https://github.com/Zig-Index/zig-index.github.io
 2. Create a feature branch
 3. Make your changes
 4. Submit a Pull Request
@@ -80,8 +80,8 @@ For website improvements:
 
 ```bash
 # Clone with submodules
-git clone --recurse-submodules https://github.com/Zig-Index/website.git
-cd website
+git clone --recurse-submodules https://github.com/Zig-Index/zig-index.github.io.git
+cd zig-index.github.io
 
 # Install dependencies
 npm install
@@ -113,7 +113,7 @@ Use existing topics when possible. Common ones include:
 
 ## Questions?
 
-- Open an issue on [GitHub](https://github.com/Zig-Index/website/issues)
+- Open an issue on [GitHub](https://github.com/Zig-Index/zig-index.github.io/issues)
 - Check the [FAQ](https://zig-index.github.io/how-to-add)
 
 Thank you for contributing to the Zig ecosystem! 🚀

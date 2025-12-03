@@ -10,8 +10,7 @@ import markdoc from '@astrojs/markdoc';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://zig-index.github.io/website',
-  base: '/website',
+  site: 'https://zig-index.github.io',
   output: 'static',
   
   integrations: [

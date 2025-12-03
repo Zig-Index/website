@@ -260,7 +260,7 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
 
           <Button variant="ghost" size="icon" asChild className="hidden sm:flex" title="View Zig Index on GitHub">
             <a 
-              href="https://github.com/Zig-Index/website" 
+              href="https://github.com/Zig-Index/zig-index.github.io" 
               target="_blank" 
               rel="noopener noreferrer"
               aria-label="View Zig Index source code on GitHub"
@@ -334,7 +334,7 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
                   </Button>
                   <Button variant="outline" asChild title="View on GitHub">
                     <a 
-                      href="https://github.com/Zig-Index/website" 
+                      href="https://github.com/Zig-Index/zig-index.github.io" 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >

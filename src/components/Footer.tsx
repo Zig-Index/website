@@ -15,7 +15,7 @@ const footerLinks = {
     { label: "Zig Forum", href: "https://ziggit.dev", external: true },
   ],
   community: [
-    { label: "GitHub", href: "https://github.com/Zig-Index/website", external: true },
+    { label: "GitHub", href: "https://github.com/Zig-Index/zig-index.github.io", external: true },
   ],
 };
 
@@ -37,7 +37,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="https://github.com/Zig-Index/website"
+                href="https://github.com/Zig-Index/zig-index.github.io"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -104,7 +104,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="https://github.com/Zig-Index/website"
+                  href="https://github.com/Zig-Index/zig-index.github.io"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
