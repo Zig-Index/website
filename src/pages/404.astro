@@ -1,0 +1,75 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Page Not Found - Zig Index",
+  "description": "The page you're looking for doesn't exist or has been moved.",
+  "url": `${siteUrl}/404`,
+};
+---
+
+<Layout 
+  title="404 - Page Not Found | Zig Index"
+  description="The page you're looking for doesn't exist or has been moved. Return to Zig Index to discover Zig packages and applications."
+  canonicalUrl={`${siteUrl}/404`}
+  schema={schema}
+>
+  <div class="min-h-screen flex flex-col">
+    <Navbar client:load />
+    
+    <main class="flex-1 flex items-center justify-center px-4 py-16">
+      <div class="text-center max-w-md">
+        <div class="mb-8">
+          <span class="text-9xl font-bold bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">
+            404
+          </span>
+        </div>
+        
+        <h1 class="text-3xl font-bold mb-4">Page Not Found</h1>
+        
+        <p class="text-muted-foreground mb-8">
+          Oops! The page you're looking for doesn't exist or has been moved.
+          Let's get you back on track.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href="/" 
+            class="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Go to Homepage
+          </a>
+          <a 
+            href="/packages" 
+            class="inline-flex items-center justify-center px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors"
+          >
+            Browse Packages
+          </a>
+        </div>
+        
+        <div class="mt-12 pt-8 border-t">
+          <p class="text-sm text-muted-foreground mb-4">
+            Looking for something specific?
+          </p>
+          <div class="flex flex-wrap gap-2 justify-center">
+            <a href="/packages" class="text-sm text-primary hover:underline">Packages</a>
+            <span class="text-muted-foreground">•</span>
+            <a href="/applications" class="text-sm text-primary hover:underline">Applications</a>
+            <span class="text-muted-foreground">•</span>
+            <a href="/search" class="text-sm text-primary hover:underline">Search</a>
+            <span class="text-muted-foreground">•</span>
+            <a href="/how-to-add" class="text-sm text-primary hover:underline">Add Your Project</a>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <Footer client:load />
+  </div>
+</Layout>

@@ -1,0 +1,50 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { RegistryPage } from "../components/RegistryPage";
+import { loadPackages, getRegistryStats } from "../lib/registryLoader";
+
+// Load packages at build time
+const packages = await loadPackages();
+const stats = getRegistryStats(packages);
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Zig Packages",
+  "description": `Browse ${stats.totalPackages} curated Zig libraries and packages for your projects.`,
+  "url": `${siteUrl}/packages`,
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": stats.totalPackages,
+    "itemListElement": packages.slice(0, 10).map((pkg, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "item": {
+        "@type": "SoftwareSourceCode",
+        "name": pkg.name,
+        "description": pkg.description,
+        "codeRepository": pkg.htmlUrl,
+        "programmingLanguage": "Zig"
+      }
+    }))
+  }
+};
+---
+
+<Layout 
+  title="Zig Packages - Libraries & Modules | Zig Index"
+  description={`Browse ${stats.totalPackages} curated Zig packages. Find libraries, modules, and reusable code for your Zig projects.`}
+  keywords="zig packages, zig libraries, zig modules, zig code, zig dependencies, zig ecosystem, zig index"
+  canonicalUrl={`${siteUrl}/packages`}
+  schema={schema}
+>
+  <RegistryPage 
+    client:load 
+    registryEntries={packages}
+    defaultType="package"
+    title="Zig Packages"
+    description={`${stats.totalPackages} curated libraries and modules for Zig development`}
+  />
+</Layout>

@@ -1,0 +1,70 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SearchPage from "../components/SearchPage";
+import { getCollection } from "astro:content";
+
+// Get query from URL
+const query = Astro.url.searchParams.get("q") || "";
+
+// Get packages and applications from content collections
+const packages = await getCollection("packages");
+const applications = await getCollection("applications");
+
+// Build search items array
+const searchItems = [
+  ...packages.map((pkg) => ({
+    name: pkg.data.name,
+    owner: pkg.data.owner,
+    repo: pkg.data.repo,
+    description: pkg.data.description,
+    category: pkg.data.category,
+    type: "package" as const,
+    fullName: `${pkg.data.owner}/${pkg.data.repo}`,
+  })),
+  ...applications.map((app) => ({
+    name: app.data.name,
+    owner: app.data.owner,
+    repo: app.data.repo,
+    description: app.data.description,
+    category: app.data.category,
+    type: "application" as const,
+    fullName: `${app.data.owner}/${app.data.repo}`,
+  })),
+];
+
+const siteUrl = "https://zig-index.github.io";
+const pageTitle = query 
+  ? `Search: ${query} - Zig Index` 
+  : "Search Zig Packages & Applications - Zig Index";
+const pageDescription = query
+  ? `Search results for "${query}" in the Zig ecosystem. Find packages, libraries, and applications.`
+  : "Search the Zig ecosystem for packages, libraries, and applications. Discover the best tools for your Zig projects.";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "SearchResultsPage",
+  "name": pageTitle,
+  "description": pageDescription,
+  "url": `${siteUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`,
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": searchItems.length,
+    "itemListElement": searchItems.slice(0, 10).map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "description": item.description,
+      "url": `${siteUrl}/repo?owner=${item.owner}&name=${item.repo}`
+    }))
+  }
+};
+---
+
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={`${siteUrl}/search`}
+  schema={schema}
+>
+  <SearchPage client:load initialQuery={query} items={searchItems} />
+</Layout>

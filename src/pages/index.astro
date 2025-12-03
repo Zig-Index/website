@@ -1,0 +1,103 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { HomePage } from "../components/HomePage";
+import { loadRegistryData, getRegistryStats } from "../lib/registryLoader";
+
+// Load all registry data at build time
+const allEntries = await loadRegistryData();
+const stats = getRegistryStats(allEntries);
+
+const siteUrl = "https://zig-index.github.io";
+
+// FAQ items for SEO
+const faqItems = [
+  {
+    question: "What is Zig Index?",
+    answer: "Zig Index is a community-driven registry for discovering Zig packages, libraries, and applications. It helps developers find quality tools and modules for the Zig programming language ecosystem."
+  },
+  {
+    question: "How do I add my Zig project to Zig Index?",
+    answer: "You can add your project by submitting a Pull Request to our GitHub registry repository. Create a JSON file with your project details in the appropriate folder (packages or applications) and submit it for review."
+  },
+  {
+    question: "Is Zig Index free to use?",
+    answer: "Yes, Zig Index is completely free and open source. All data is fetched from GitHub and displayed client-side for fast, privacy-respecting browsing."
+  },
+  {
+    question: "What's the difference between packages and applications?",
+    answer: "Packages are reusable libraries and modules that can be imported into your Zig projects. Applications are standalone tools and software built with Zig that users can run directly."
+  },
+  {
+    question: "How often is the registry updated?",
+    answer: "The registry is updated through community contributions via Pull Requests. Live statistics like stars and forks are fetched directly from GitHub when you browse the site."
+  },
+  {
+    question: "Can I contribute to Zig Index?",
+    answer: "Absolutely! Zig Index is open source. You can contribute by adding packages, reporting issues, or improving the website code on our GitHub repository."
+  }
+];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "Zig Index",
+      "url": siteUrl,
+      "description": "The community-driven registry for discovering Zig packages, libraries, and applications.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${siteUrl}/search?q={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Zig Index",
+        "url": siteUrl
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": faqItems.map(item => ({
+        "@type": "Question",
+        "name": item.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": item.answer
+        }
+      }))
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Zig Index",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": stats.totalEntries.toString()
+      }
+    }
+  ]
+};
+---
+
+<Layout 
+  title="Zig Index - Discover Zig Packages & Applications"
+  description={`Discover ${stats.totalPackages} packages and ${stats.totalApplications} applications for the Zig programming language. The community-driven registry for quality Zig ecosystem tools.`}
+  keywords="zig, zig packages, zig libraries, zig applications, zig ecosystem, zig registry, zig modules, package manager, zig tools, zig index, ziglang"
+  canonicalUrl={siteUrl}
+  schema={schema}
+>
+  <HomePage 
+    client:load 
+    registryEntries={allEntries}
+    totalPackages={stats.totalPackages}
+    totalApplications={stats.totalApplications}
+  />
+</Layout>

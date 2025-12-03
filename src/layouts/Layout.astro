@@ -1,0 +1,106 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  pageType?: "website" | "article" | "profile";
+  schema?: object;
+}
+
+const siteUrl = "https://zig-index.github.io";
+
+const { 
+  title = "Zig Index - Discover Zig Packages & Applications",
+  description = "The community-driven registry for discovering Zig packages, libraries, and applications. Find the best Zig ecosystem tools, modules, and software.",
+  keywords = "zig, zig programming language, zig packages, zig libraries, zig applications, zig ecosystem, zig modules, package registry, zig tools, zig index",
+  canonicalUrl = siteUrl,
+  ogImage = `${siteUrl}/og-image.png`,
+  pageType = "website",
+  schema,
+} = Astro.props;
+
+// Default WebSite schema
+const defaultSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Zig Index",
+  "url": siteUrl,
+  "description": description,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": `${siteUrl}/search?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
+};
+
+const schemaJson = JSON.stringify(schema || defaultSchema);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <meta name="author" content="Zig Index Community" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalUrl} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={pageType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content="Zig Index" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalUrl} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:creator" content="@zig_index" />
+    
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#f97316" />
+    <meta name="msapplication-TileColor" content="#f97316" />
+    
+    <!-- Preload fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json" set:html={schemaJson} />
+    
+    <!-- Theme script to prevent flash -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme') || 'system';
+      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-background text-foreground antialiased">
+    <slot />
+  </body>
+</html>

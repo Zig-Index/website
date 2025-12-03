@@ -1,0 +1,74 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Server Error - Zig Index",
+  "description": "Something went wrong on our end. Please try again later.",
+  "url": `${siteUrl}/500`,
+};
+---
+
+<Layout 
+  title="500 - Server Error | Zig Index"
+  description="Something went wrong on our end. Please try again later or return to the homepage."
+  canonicalUrl={`${siteUrl}/500`}
+  schema={schema}
+>
+  <div class="min-h-screen flex flex-col">
+    <Navbar client:load />
+    
+    <main class="flex-1 flex items-center justify-center px-4 py-16">
+      <div class="text-center max-w-md">
+        <div class="mb-8">
+          <span class="text-9xl font-bold bg-linear-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+            500
+          </span>
+        </div>
+        
+        <h1 class="text-3xl font-bold mb-4">Server Error</h1>
+        
+        <p class="text-muted-foreground mb-8">
+          Oops! Something went wrong on our end. Our team has been notified
+          and we're working to fix the issue.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href="/" 
+            class="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Go to Homepage
+          </a>
+          <button 
+            onclick="window.location.reload()"
+            class="inline-flex items-center justify-center px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+        
+        <div class="mt-12 pt-8 border-t">
+          <p class="text-sm text-muted-foreground mb-2">
+            If the problem persists, please
+          </p>
+          <a 
+            href="https://github.com/Zig-Index/website/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm text-primary hover:underline"
+          >
+            Report an issue on GitHub →
+          </a>
+        </div>
+      </div>
+    </main>
+    
+    <Footer client:load />
+  </div>
+</Layout>

@@ -1,0 +1,15 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { RepoPageClient } from "../components/RepoPageClient";
+
+const siteUrl = "https://zig-index.github.io";
+---
+
+<Layout 
+  title="Repository Details | Zig Index"
+  description="View detailed information about Zig packages and applications including stats, README, and more."
+  keywords="zig package details, zig repository, zig project info, github zig, zig index"
+  canonicalUrl={`${siteUrl}/repo`}
+>
+  <RepoPageClient client:load />
+</Layout>

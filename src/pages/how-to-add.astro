@@ -1,0 +1,44 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { HowToAddPage } from "../components/HowToAddPage";
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Add Your Zig Project to Zig Index",
+  "description": "Learn how to submit your Zig package or application to the Zig Index registry via Pull Request.",
+  "url": `${siteUrl}/how-to-add`,
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Fork the Registry Repository",
+      "text": "Fork the Zig Index registry repository on GitHub to get started."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Create JSON Entry",
+      "text": "Add a new JSON file in repositories/packages/ or repositories/applications/ with your project details."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Submit Pull Request",
+      "text": "Submit a Pull Request with your changes for review."
+    }
+  ]
+};
+---
+
+<Layout 
+  title="How to Add Your Zig Project | Zig Index"
+  description="Learn how to add your Zig package or application to Zig Index. Simple Pull Request process to get your project listed in the community registry."
+  keywords="add zig package, submit zig project, zig registry contribution, zig community, open source zig, zig index"
+  canonicalUrl={`${siteUrl}/how-to-add`}
+  schema={schema}
+>
+  <HowToAddPage client:load />
+</Layout>

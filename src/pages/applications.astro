@@ -1,0 +1,51 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { RegistryPage } from "../components/RegistryPage";
+import { loadApplications, getRegistryStats } from "../lib/registryLoader";
+
+// Load applications at build time
+const applications = await loadApplications();
+const stats = getRegistryStats(applications);
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Zig Applications",
+  "description": `Discover ${stats.totalApplications} applications, tools, and software built with Zig.`,
+  "url": `${siteUrl}/applications`,
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": stats.totalApplications,
+    "itemListElement": applications.slice(0, 10).map((app, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "item": {
+        "@type": "SoftwareApplication",
+        "name": app.name,
+        "description": app.description,
+        "url": app.htmlUrl,
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Cross-platform"
+      }
+    }))
+  }
+};
+---
+
+<Layout 
+  title="Zig Applications - Tools & Software | Zig Index"
+  description={`Discover ${stats.totalApplications} applications built with Zig. Find tools, software, and programs powered by the Zig programming language.`}
+  keywords="zig applications, zig software, zig tools, zig programs, built with zig, zig projects, zig index"
+  canonicalUrl={`${siteUrl}/applications`}
+  schema={schema}
+>
+  <RegistryPage 
+    client:load 
+    registryEntries={applications}
+    defaultType="application"
+    title="Zig Applications"
+    description={`${stats.totalApplications} tools and software built with Zig`}
+  />
+</Layout>
