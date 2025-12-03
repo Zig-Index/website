@@ -15,13 +15,13 @@ const registrySchema = z.object({
 
 // Packages collection - from src/registry/repositories/packages
 const packages = defineCollection({
-  loader: glob({ pattern: '**/*.json', base: './src/registry/src/registry/repositories/packages' }),
+  loader: glob({ pattern: '**/*.json', base: './src/registry/repositories/packages' }),
   schema: registrySchema,
 });
 
 // Applications collection - from src/registry/repositories/applications
 const applications = defineCollection({
-  loader: glob({ pattern: '**/*.json', base: './src/registry/src/registry/repositories/applications' }),
+  loader: glob({ pattern: '**/*.json', base: './src/registry/repositories/applications' }),
   schema: registrySchema,
 });
 
