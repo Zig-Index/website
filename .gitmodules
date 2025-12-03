@@ -1,3 +1,0 @@
-[submodule "src/registry"]
-	path = src/registry
-	url = https://github.com/Zig-Index/registry.git
