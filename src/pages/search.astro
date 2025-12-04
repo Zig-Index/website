@@ -10,7 +10,7 @@ const query = Astro.url.searchParams.get("q") || "";
 const packages = await getCollection("packages");
 const applications = await getCollection("applications");
 
-// Build search items array
+// Build search items array with comprehensive data for SEO
 const searchItems = [
   ...packages.map((pkg) => ({
     name: pkg.data.name,
@@ -33,36 +33,102 @@ const searchItems = [
 ];
 
 const siteUrl = "https://zig-index.github.io";
-const pageTitle = query 
-  ? `Search: ${query} - Zig Index` 
-  : "Search Zig Packages & Applications - Zig Index";
-const pageDescription = query
-  ? `Search results for "${query}" in the Zig ecosystem. Find packages, libraries, and applications.`
-  : "Search the Zig ecosystem for packages, libraries, and applications. Discover the best tools for your Zig projects.";
 
+// Generate comprehensive SEO meta tags
+const pageTitle = query 
+  ? `Search "${query}" - Zig Packages & Applications | Zig Index` 
+  : "Search Zig Packages & Applications - Find Libraries, Tools & Software | Zig Index";
+
+const pageDescription = query
+  ? `Search results for "${query}" in Zig Index. Discover ${searchItems.length}+ Zig packages, libraries, tools, and applications. Find the best Zig ecosystem resources for your projects.`
+  : `Search ${searchItems.length}+ curated Zig packages, libraries, and applications. Find the perfect tools, modules, and software for your Zig programming projects. Community-driven Zig package registry.`;
+
+// Generate keywords dynamically from search items
+const categoryKeywords = [...new Set(searchItems.map(item => item.category))].filter(Boolean).join(", ");
+const projectKeywords = searchItems.slice(0, 10).map(item => item.name).join(", ");
+const pageKeywords = query 
+  ? `${query}, zig search, zig packages, zig libraries, zig applications, ${categoryKeywords}, zig tools, zig ecosystem`
+  : `zig packages search, zig libraries, zig applications, zig tools, ${categoryKeywords}, ${projectKeywords}, zig ecosystem, zig index`;
+
+// Comprehensive schema for search results
 const schema = {
   "@context": "https://schema.org",
-  "@type": "SearchResultsPage",
-  "name": pageTitle,
-  "description": pageDescription,
-  "url": `${siteUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`,
-  "mainEntity": {
-    "@type": "ItemList",
-    "numberOfItems": searchItems.length,
-    "itemListElement": searchItems.slice(0, 10).map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      "description": item.description,
-      "url": `${siteUrl}/repo?owner=${item.owner}&name=${item.repo}`
-    }))
-  }
+  "@graph": [
+    {
+      "@type": "SearchResultsPage",
+      "@id": `${siteUrl}/search#searchresults`,
+      "name": pageTitle,
+      "description": pageDescription,
+      "url": `${siteUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`,
+      "isPartOf": {
+        "@id": `${siteUrl}/#website`
+      },
+      "about": {
+        "@type": "Thing",
+        "name": "Zig Programming Language Ecosystem"
+      },
+      "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": searchItems.length,
+        "itemListElement": searchItems.slice(0, 20).map((item, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": item.type === "package" ? "SoftwareSourceCode" : "SoftwareApplication",
+            "@id": `${siteUrl}/repo?owner=${item.owner}&name=${item.repo}`,
+            "name": item.name,
+            "description": item.description || `${item.name} - A Zig ${item.type}`,
+            "url": `${siteUrl}/repo?owner=${item.owner}&name=${item.repo}`,
+            "codeRepository": `https://github.com/${item.owner}/${item.repo}`,
+            "programmingLanguage": {
+              "@type": "ComputerLanguage",
+              "name": "Zig"
+            },
+            "applicationCategory": item.category || "Developer Tools"
+          }
+        }))
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      "name": "Zig Index",
+      "url": siteUrl,
+      "description": "The community-driven registry for discovering Zig packages, libraries, and applications.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": siteUrl
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Search",
+          "item": `${siteUrl}/search`
+        }
+      ]
+    }
+  ]
 };
 ---
 
 <Layout 
   title={pageTitle}
   description={pageDescription}
+  keywords={pageKeywords}
   canonicalUrl={`${siteUrl}/search`}
   schema={schema}
 >

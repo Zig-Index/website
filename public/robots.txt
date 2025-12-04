@@ -1,18 +1,47 @@
-# Robots.txt for Zig Index
+# Robots.txt for Zig Index - The Community-Driven Zig Package Registry
 # https://zig-index.github.io
 
+# Allow all search engines to crawl
 User-agent: *
 Allow: /
+Allow: /packages
+Allow: /applications
+Allow: /search
+Allow: /how-to-add
+Allow: /privacy
+Allow: /terms
+Allow: /repo
+
+# Disallow error pages
+Disallow: /404
+Disallow: /500
 
 # Sitemap location
 Sitemap: https://zig-index.github.io/sitemap-index.xml
 
-# Allow search engines to crawl all content
+# Crawl-delay for polite crawling (optional)
+Crawl-delay: 1
+
+# Google-specific
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
+# Bing-specific
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
+# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
+
+# Yandex
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2

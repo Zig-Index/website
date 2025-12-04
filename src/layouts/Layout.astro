@@ -12,6 +12,8 @@ interface Props {
 }
 
 const siteUrl = "https://zig-index.github.io";
+const siteName = "Zig Index";
+const twitterHandle = "@zig_index";
 
 const { 
   title = "Zig Index - Discover Zig Packages & Applications",
@@ -23,18 +25,42 @@ const {
   schema,
 } = Astro.props;
 
-// Default WebSite schema
+// Default WebSite schema with comprehensive SEO
 const defaultSchema = {
   "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Zig Index",
-  "url": siteUrl,
-  "description": description,
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": `${siteUrl}/search?q={search_term_string}`,
-    "query-input": "required name=search_term_string"
-  }
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      "name": siteName,
+      "url": siteUrl,
+      "description": description,
+      "inLanguage": "en-US",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": siteName,
+        "url": siteUrl
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      "name": siteName,
+      "url": siteUrl,
+      "sameAs": [
+        "https://github.com/Zig-Index/zig-index.github.io",
+        "https://github.com/Zig-Index/registry"
+      ]
+    }
+  ]
 };
 
 const schemaJson = JSON.stringify(schema || defaultSchema);
@@ -57,12 +83,24 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords} />
     <meta name="author" content="Zig Index Community" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
     <meta name="language" content="English" />
-    <meta name="revisit-after" content="7 days" />
+    <meta name="revisit-after" content="3 days" />
+    <meta name="rating" content="General" />
+    <meta name="distribution" content="global" />
+    
+    <!-- Geo Meta Tags -->
+    <meta name="geo.region" content="US" />
+    <meta name="ICBM" content="0, 0" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href={canonicalUrl} />
+    
+    <!-- Alternate language (self-referencing for single language) -->
+    <link rel="alternate" hreflang="en" href={canonicalUrl} />
+    <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content={pageType} />
@@ -70,16 +108,21 @@ const schemaJson = JSON.stringify(schema || defaultSchema);
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:site_name" content="Zig Index" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${title} - Zig Index`} />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:locale" content="en_US" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content={twitterHandle} />
     <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    <meta name="twitter:creator" content="@zig_index" />
+    <meta name="twitter:image:alt" content={`${title} - Zig Index`} />
+    <meta name="twitter:creator" content={twitterHandle} />
     
     <!-- Additional SEO -->
     <meta name="theme-color" content="#f97316" />
