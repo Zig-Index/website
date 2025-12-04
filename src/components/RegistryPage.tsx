@@ -90,13 +90,43 @@ function RegistryPageContent({
     sort
   );
 
-  // Apply status filter after stats are loaded (since status comes from API)
+  // Apply stats-based filters after stats are loaded (status, minStars, updatedWithin)
   const filteredEntriesWithStats = React.useMemo(() => {
-    if (!filter.statusFilter || filter.statusFilter === "all") {
-      return entriesWithStats;
+    let result = entriesWithStats;
+    
+    // Filter by status (exists/deleted)
+    if (filter.statusFilter && filter.statusFilter !== "all") {
+      result = result.filter(entry => entry.status === filter.statusFilter);
     }
-    return entriesWithStats.filter(entry => entry.status === filter.statusFilter);
-  }, [entriesWithStats, filter.statusFilter]);
+    
+    // Filter by minimum stars (requires live stats)
+    if (filter.minStars && filter.minStars > 0) {
+      result = result.filter(entry => 
+        entry.stats && entry.stats.stargazers_count >= (filter.minStars || 0)
+      );
+    }
+    
+    // Filter by updated within time period (requires live stats)
+    if (filter.updatedWithin && filter.updatedWithin !== "all") {
+      const now = Date.now();
+      const cutoffMap: Record<string, number> = {
+        day: 24 * 60 * 60 * 1000,
+        week: 7 * 24 * 60 * 60 * 1000,
+        month: 30 * 24 * 60 * 60 * 1000,
+        year: 365 * 24 * 60 * 60 * 1000,
+      };
+      const cutoffMs = cutoffMap[filter.updatedWithin];
+      if (cutoffMs) {
+        result = result.filter(entry => {
+          if (!entry.stats?.pushed_at) return false;
+          const updatedAt = new Date(entry.stats.pushed_at).getTime();
+          return (now - updatedAt) <= cutoffMs;
+        });
+      }
+    }
+    
+    return result;
+  }, [entriesWithStats, filter.statusFilter, filter.minStars, filter.updatedWithin]);
 
   // Derive unique filters from registry
   const registryCategories = React.useMemo(() => getUniqueCategories(registryEntries), [registryEntries]);
