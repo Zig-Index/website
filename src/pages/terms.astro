@@ -1,161 +1,41 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { TermsPage } from "../components/TermsPage";
+import { loadRegistryData } from "../lib/registryLoader";
+
+// Load registry data for search functionality
+const allEntries = await loadRegistryData();
+
+// Prepare search items for navbar
+const searchItems = allEntries.map(e => ({
+  name: e.name,
+  owner: e.owner,
+  repo: e.repo,
+  description: e.description,
+  category: e.category,
+  type: e.type,
+  fullName: `${e.owner}/${e.repo}`,
+}));
 
 const pageTitle = "Terms of Service | Zig Index";
 const pageDescription = "Terms of Service for Zig Index - Community guidelines and usage terms for the Zig package registry.";
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Terms of Service - Zig Index",
+  "description": "Terms of service for Zig Index, a community-maintained index of Zig programming language packages and applications.",
+  "url": `${siteUrl}/terms`,
+  "publisher": {
+    "@type": "Organization",
+    "name": "Zig Index",
+    "url": siteUrl
+  }
+};
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
-  <main class="container mx-auto px-4 py-16">
-    <div class="max-w-3xl mx-auto prose prose-neutral dark:prose-invert">
-      <h1 class="text-3xl font-bold mb-8">Terms of Service</h1>
-      
-      <p class="text-muted-foreground mb-6">
-        <strong>Last updated:</strong> {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-      </p>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Acceptance of Terms</h2>
-        <p>
-          By accessing and using Zig Index ("the Service"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Description of Service</h2>
-        <p>
-          Zig Index is a community-driven registry that helps developers discover Zig programming language packages and applications. The Service provides:
-        </p>
-        <ul class="list-disc pl-6">
-          <li>A curated directory of Zig packages and applications</li>
-          <li>Links to GitHub repositories and documentation</li>
-          <li>Search and filtering capabilities</li>
-          <li>Repository statistics and information</li>
-        </ul>
-        <p class="mt-4">
-          Zig Index does not host any package code directly. All linked repositories are hosted on GitHub and are subject to their respective licenses and GitHub's Terms of Service.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">User Conduct</h2>
-        <p>When using the Service, you agree not to:</p>
-        <ul class="list-disc pl-6">
-          <li>Violate any applicable laws or regulations</li>
-          <li>Attempt to bypass rate limits or access restrictions</li>
-          <li>Use automated tools to scrape data excessively</li>
-          <li>Submit spam, malicious packages, or misleading information</li>
-          <li>Interfere with or disrupt the Service or servers</li>
-          <li>Impersonate others or provide false information</li>
-        </ul>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Contributing Packages</h2>
-        <p>
-          When submitting a package to the registry, you represent and warrant that:
-        </p>
-        <ul class="list-disc pl-6">
-          <li>You have the right to submit the package information</li>
-          <li>The package does not contain malicious code</li>
-          <li>The package information is accurate and not misleading</li>
-          <li>The package complies with its stated license</li>
-          <li>You will maintain the accuracy of your submission</li>
-        </ul>
-        <p class="mt-4">
-          We reserve the right to remove any package from the registry at our discretion, including but not limited to packages that violate these terms or are abandoned.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Intellectual Property</h2>
-        
-        <h3 class="text-xl font-medium mb-3">Zig Index</h3>
-        <p>
-          The Zig Index website, including its design, code, and documentation, is open source and available under the MIT License. You can find the source code on our <a href="https://github.com/Zig-Index/zig-index.github.io" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub repository</a>.
-        </p>
-
-        <h3 class="text-xl font-medium mb-3 mt-4">Listed Packages</h3>
-        <p>
-          Each package listed on Zig Index is owned by its respective authors and is subject to its own license. Zig Index does not claim ownership of any listed package. Users should review individual package licenses before use.
-        </p>
-
-        <h3 class="text-xl font-medium mb-3 mt-4">Zig Trademark</h3>
-        <p>
-          "Zig" and the Zig logo are trademarks of the Zig Software Foundation. Zig Index is a community project and is not officially affiliated with or endorsed by the Zig Software Foundation.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Disclaimer of Warranties</h2>
-        <p>
-          THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. WE DO NOT WARRANT THAT:
-        </p>
-        <ul class="list-disc pl-6">
-          <li>The Service will be uninterrupted or error-free</li>
-          <li>The information provided is accurate or complete</li>
-          <li>Listed packages are safe, secure, or fit for any purpose</li>
-          <li>The Service will meet your specific requirements</li>
-        </ul>
-        <p class="mt-4">
-          YOU USE PACKAGES LISTED ON THIS REGISTRY AT YOUR OWN RISK. Always review code and licenses before using any software in your projects.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Limitation of Liability</h2>
-        <p>
-          TO THE MAXIMUM EXTENT PERMITTED BY LAW, ZIG INDEX AND ITS CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SERVICE OR ANY PACKAGES DISCOVERED THROUGH THE SERVICE.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Third-Party Links</h2>
-        <p>
-          The Service contains links to third-party websites, including GitHub repositories. We are not responsible for the content, privacy policies, or practices of these third-party sites. We encourage you to review the terms and privacy policies of any third-party sites you visit.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Modifications to Service</h2>
-        <p>
-          We reserve the right to modify, suspend, or discontinue the Service at any time without notice. We may also update these Terms of Service from time to time. Continued use of the Service after changes constitutes acceptance of the modified terms.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">GitHub API Usage</h2>
-        <p>
-          The Service uses the GitHub API to retrieve repository information. Your use of features that depend on the GitHub API is subject to <a href="https://docs.github.com/en/site-policy/github-terms/github-terms-of-service" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub's Terms of Service</a>.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Community Guidelines</h2>
-        <p>
-          Zig Index is a community project. We expect all participants to:
-        </p>
-        <ul class="list-disc pl-6">
-          <li>Be respectful and considerate in all interactions</li>
-          <li>Provide constructive feedback</li>
-          <li>Help maintain the quality of the registry</li>
-          <li>Follow open source community best practices</li>
-        </ul>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Governing Law</h2>
-        <p>
-          These Terms shall be governed by and construed in accordance with applicable laws, without regard to conflict of law provisions.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Contact</h2>
-        <p>
-          If you have any questions about these Terms of Service, please open an issue on our <a href="https://github.com/Zig-Index/zig-index.github.io/issues" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub repository</a>.
-        </p>
-      </section>
-    </div>
-  </main>
+<Layout title={pageTitle} description={pageDescription} schema={schema}>
+  <TermsPage client:load searchItems={searchItems} />
 </Layout>

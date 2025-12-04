@@ -1,127 +1,41 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { PrivacyPage } from "../components/PrivacyPage";
+import { loadRegistryData } from "../lib/registryLoader";
+
+// Load registry data for search functionality
+const allEntries = await loadRegistryData();
+
+// Prepare search items for navbar
+const searchItems = allEntries.map(e => ({
+  name: e.name,
+  owner: e.owner,
+  repo: e.repo,
+  description: e.description,
+  category: e.category,
+  type: e.type,
+  fullName: `${e.owner}/${e.repo}`,
+}));
 
 const pageTitle = "Privacy Policy | Zig Index";
 const pageDescription = "Privacy Policy for Zig Index - Learn how we collect, use, and protect your information.";
+
+const siteUrl = "https://zig-index.github.io";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Privacy Policy - Zig Index",
+  "description": "Privacy policy for Zig Index, a community-maintained index of Zig programming language packages and applications.",
+  "url": `${siteUrl}/privacy`,
+  "publisher": {
+    "@type": "Organization",
+    "name": "Zig Index",
+    "url": siteUrl
+  }
+};
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
-  <main class="container mx-auto px-4 py-16">
-    <div class="max-w-3xl mx-auto prose prose-neutral dark:prose-invert">
-      <h1 class="text-3xl font-bold mb-8">Privacy Policy</h1>
-      
-      <p class="text-muted-foreground mb-6">
-        <strong>Last updated:</strong> {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-      </p>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Introduction</h2>
-        <p>
-          Zig Index ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website at <a href="https://zig-index.github.io" class="text-primary hover:underline">zig-index.github.io</a>.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Information We Collect</h2>
-        
-        <h3 class="text-xl font-medium mb-3">Analytics Data</h3>
-        <p>We use Google Analytics to understand how visitors interact with our website. This service may collect:</p>
-        <ul class="list-disc pl-6 mb-4">
-          <li>Pages visited and time spent on each page</li>
-          <li>Browser type and version</li>
-          <li>Operating system</li>
-          <li>Referring website</li>
-          <li>General geographic location (country/city level)</li>
-          <li>Device type (desktop, mobile, tablet)</li>
-        </ul>
-        <p>
-          Google Analytics uses cookies and similar technologies to collect this information. You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Google Analytics Opt-out Browser Add-on</a>.
-        </p>
-
-        <h3 class="text-xl font-medium mb-3 mt-6">Local Storage</h3>
-        <p>
-          We use your browser's local storage (IndexedDB) to cache repository data from GitHub. This improves performance and reduces API requests. This data is stored locally on your device and is not transmitted to our servers.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">How We Use Your Information</h2>
-        <p>We use the collected information to:</p>
-        <ul class="list-disc pl-6">
-          <li>Understand how visitors use our website</li>
-          <li>Improve our website's performance and user experience</li>
-          <li>Identify and fix technical issues</li>
-          <li>Analyze traffic patterns and popular content</li>
-        </ul>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Third-Party Services</h2>
-        <p>Our website integrates with the following third-party services:</p>
-        
-        <h3 class="text-xl font-medium mb-3">GitHub API</h3>
-        <p>
-          We fetch repository information from GitHub's public API. When you browse package details, we request data directly from GitHub. This is subject to <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub's Privacy Policy</a>.
-        </p>
-
-        <h3 class="text-xl font-medium mb-3 mt-4">GitHub Pages</h3>
-        <p>
-          This website is hosted on GitHub Pages, which may collect basic server logs. See <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#data-collection" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub Pages Data Collection</a> for more information.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Cookies</h2>
-        <p>
-          We use cookies primarily through Google Analytics. Cookies are small text files stored on your device that help us analyze web traffic. You can control cookies through your browser settings or by using browser extensions.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Data Security</h2>
-        <p>
-          We do not collect personal information directly. All data processing is done through established third-party services (Google Analytics, GitHub) that maintain their own security standards. Local cached data in IndexedDB remains on your device.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Your Rights</h2>
-        <p>You have the right to:</p>
-        <ul class="list-disc pl-6">
-          <li>Opt out of Google Analytics tracking</li>
-          <li>Clear locally stored cache data through your browser settings</li>
-          <li>Use browser privacy features (incognito mode, tracking protection)</li>
-          <li>Contact us with questions about this policy</li>
-        </ul>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Children's Privacy</h2>
-        <p>
-          Our website is not directed at children under 13 years of age. We do not knowingly collect personal information from children.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Changes to This Policy</h2>
-        <p>
-          We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Open Source</h2>
-        <p>
-          Zig Index is an open-source project. You can review our source code on <a href="https://github.com/Zig-Index/zig-index.github.io" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub</a> to see exactly how we handle data.
-        </p>
-      </section>
-
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Contact</h2>
-        <p>
-          If you have any questions about this Privacy Policy, please open an issue on our <a href="https://github.com/Zig-Index/zig-index.github.io/issues" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub repository</a>.
-        </p>
-      </section>
-    </div>
-  </main>
+<Layout title={pageTitle} description={pageDescription} schema={schema}>
+  <PrivacyPage client:load searchItems={searchItems} />
 </Layout>
