@@ -65,10 +65,24 @@ function CodeBlock({ code, language = "text" }: { code: string; language?: strin
   );
 }
 
-export function HowToAddPage() {
+interface SearchItem {
+  name: string;
+  owner: string;
+  repo: string;
+  description: string;
+  category?: string;
+  type: "package" | "application";
+  fullName: string;
+}
+
+interface HowToAddPageProps {
+  searchItems?: SearchItem[];
+}
+
+export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar searchItems={searchItems} />
       
       <main className="flex-1">
         {/* Hero Section */}

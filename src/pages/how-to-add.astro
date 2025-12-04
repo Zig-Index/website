@@ -1,6 +1,21 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { HowToAddPage } from "../components/HowToAddPage";
+import { loadRegistryData } from "../lib/registryLoader";
+
+// Load registry data for search functionality
+const allEntries = await loadRegistryData();
+
+// Prepare search items for navbar
+const searchItems = allEntries.map(e => ({
+  name: e.name,
+  owner: e.owner,
+  repo: e.repo,
+  description: e.description,
+  category: e.category,
+  type: e.type,
+  fullName: `${e.owner}/${e.repo}`,
+}));
 
 const siteUrl = "https://zig-index.github.io";
 
@@ -40,5 +55,5 @@ const schema = {
   canonicalUrl={`${siteUrl}/how-to-add`}
   schema={schema}
 >
-  <HowToAddPage client:load />
+  <HowToAddPage client:load searchItems={searchItems} />
 </Layout>
