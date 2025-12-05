@@ -240,19 +240,26 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
 
   // Error state
   if (userError || (!user && userResult?.error)) {
+    const errorMsg = userResult?.error || `Could not find GitHub user "${username}"`;
+    const isRateLimit = errorMsg.includes('Rate limit');
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 container mx-auto px-4 py-16">
           <EmptyState
             icon={<User className="w-12 h-12" />}
-            title="User Not Found"
-            description={userResult?.error || `Could not find GitHub user "${username}"`}
+            title={isRateLimit ? "GitHub Rate Limit Exceeded" : "User Not Found"}
+            description={errorMsg}
             action={{
               label: "Go to Home",
               onClick: () => window.location.href = "/",
             }}
           />
+          {isRateLimit && (
+            <p className="text-xs text-center text-muted-foreground mt-4">
+              Tip: Add a GitHub token to increase rate limits
+            </p>
+          )}
         </main>
         <Footer />
       </div>
@@ -316,7 +323,7 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
               {/* User Details */}
               <div className="flex-1 text-center lg:text-left min-w-0">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 mb-2">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold wrap-break-word">
                     {user?.name || username}
                   </h1>
                   {user?.hireable && (
@@ -329,7 +336,7 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                 </p>
 
                 {user?.bio && (
-                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-2xl break-words">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-2xl wrap-break-word">
                     {user.bio}
                   </p>
                 )}

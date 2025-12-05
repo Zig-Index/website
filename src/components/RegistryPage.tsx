@@ -9,7 +9,8 @@ import { RegistryCard, RegistryCardSkeleton } from "./RepoCard";
 import { Filters } from "./Filters";
 import { Pagination } from "./Pagination";
 import { EmptyState } from "./SyncStatus";
-import { Package, Search } from "lucide-react";
+import { Package, Search, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "./ui/alert";
 import {
   useFilteredRegistry,
   useRegistryWithStats,
@@ -84,7 +85,7 @@ function RegistryPageContent({
   });
 
   // Get stats for visible entries
-  const { data: entriesWithStats, isLoading: statsLoading } = useRegistryWithStats(
+  const { data: entriesWithStats, isLoading: statsLoading, error: statsError } = useRegistryWithStats(
     filteredRegistry.items,
     true,
     sort

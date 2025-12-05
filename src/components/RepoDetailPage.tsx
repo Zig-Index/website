@@ -242,11 +242,13 @@ function getDependencyInfo(dep: ZigDependency): {
 function DependenciesCard({ 
   dependencies, 
   minZigVersion, 
-  isLoading 
+  isLoading,
+  error
 }: { 
   dependencies: ZigDependency[]; 
   minZigVersion?: string;
   isLoading: boolean;
+  error?: string;
 }) {
   if (isLoading) {
     return (
@@ -282,6 +284,23 @@ function DependenciesCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Show error message if there's an error and no data */}
+        {error && !minZigVersion && dependencies.length === 0 && (
+          <div className="text-center py-3">
+            <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-yellow-500 opacity-75" />
+            {error.includes('Rate limit') ? (
+              <>
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Rate Limit Exceeded</p>
+                <p className="text-xs text-muted-foreground mt-1">{error}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">Failed to load dependencies</p>
+                <p className="text-xs text-muted-foreground mt-1">{error}</p>
+              </>
+            )}
+          </div>
+        )}
         {minZigVersion && (
           <>
             <div className="flex items-center justify-between text-sm">
@@ -347,7 +366,7 @@ function DependenciesCard({
               })}
             </div>
           </ScrollArea>
-        ) : !minZigVersion ? (
+        ) : !minZigVersion && !error ? (
           <div className="text-center py-3 text-muted-foreground text-sm">
             <Package className="w-6 h-6 mx-auto mb-2 opacity-50" />
             <p>No dependencies</p>
@@ -544,7 +563,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoReadme", fullName],
     queryFn: async () => {
       const result = await fetchRepoReadmeWithCache(owner, name);
-      return { readme: result.readme, isStale: result.isStale };
+      return { readme: result.readme, isStale: result.isStale, error: result.error };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -554,7 +573,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoReleases", fullName],
     queryFn: async () => {
       const result = await fetchRepoReleasesWithCache(owner, name);
-      return { releases: result.releases, isStale: result.isStale };
+      return { releases: result.releases, isStale: result.isStale, error: result.error };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -564,7 +583,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoZon", fullName],
     queryFn: async () => {
       const result = await fetchRepoZonWithCache(owner, name);
-      return { zon: result.zon, isStale: result.isStale };
+      return { zon: result.zon, isStale: result.isStale, error: result.error };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -574,7 +593,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     queryKey: ["repoIssues", fullName],
     queryFn: async () => {
       const result = await fetchRepoIssuesWithCache(owner, name);
-      return { issues: result.issues, isStale: result.isStale };
+      return { issues: result.issues, isStale: result.isStale, error: result.error };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -582,9 +601,13 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
   const stats = statsResult?.stats;
   const repoStatus = statsResult?.status || "unknown";
   const readme = readmeResult?.readme;
+  const readmeError = readmeResult?.error;
   const releases = releasesResult?.releases;
+  const releasesError = releasesResult?.error;
   const zon = zonResult?.zon;
+  const zonError = zonResult?.error;
   const issuesInfo = issuesResult?.issues;
+  const issuesError = issuesResult?.error;
   const latestVersion = releases?.latestVersion;
   const versions = releases?.versions || [];
   const isDeleted = repoStatus === "deleted";
@@ -702,7 +725,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="min-w-0">
-                    <h1 className="text-2xl sm:text-3xl font-bold break-words">{displayData.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold wrap-break-word">{displayData.name}</h1>
                     <p className="text-muted-foreground">
                       by{" "}
                       <a 
@@ -715,7 +738,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   </div>
                 </div>
 
-                <p className="text-base sm:text-lg text-muted-foreground mb-4 break-words">
+                <p className="text-base sm:text-lg text-muted-foreground mb-4 wrap-break-word">
                   {displayData.description}
                 </p>
 
@@ -1036,13 +1059,31 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </div>
                   ) : readme?.readme_html ? (
                     <div 
-                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden overflow-y-visible break-words"
+                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden overflow-y-visible wrap-break-word"
                       dangerouslySetInnerHTML={{ __html: readme.readme_html }}
                     />
+                  ) : readmeError ? (
+                    <div className="text-center py-8">
+                      <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-yellow-500 opacity-75" />
+                      {readmeError.includes('Rate limit') ? (
+                        <>
+                          <p className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">GitHub Rate Limit Exceeded</p>
+                          <p className="text-sm text-muted-foreground">{readmeError}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Tip: Add a GitHub token to increase rate limits
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-muted-foreground font-medium mb-2">Failed to load README</p>
+                          <p className="text-sm text-muted-foreground">{readmeError}</p>
+                        </>
+                      )}
+                    </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>README not available</p>
+                      <p>This repository does not have a README file</p>
                     </div>
                   )}
                 </CardContent>
@@ -1194,6 +1235,11 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{issuesInfo.closedIssues} closed</span>
                         </span>
+                      ) : issuesError?.includes('Rate limit') ? (
+                        <span className="ml-auto flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
+                          <AlertTriangle className="w-3 h-3" />
+                          Rate limited
+                        </span>
                       ) : (
                         <ExternalLink className="w-3 h-3 ml-auto" />
                       )}
@@ -1212,6 +1258,11 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                           <span className="text-green-600 dark:text-green-400">{issuesInfo.openPullRequests} open</span>
                           <span className="text-muted-foreground">·</span>
                           <span className="text-muted-foreground">{issuesInfo.closedPullRequests} closed</span>
+                        </span>
+                      ) : issuesError?.includes('Rate limit') ? (
+                        <span className="ml-auto flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
+                          <AlertTriangle className="w-3 h-3" />
+                          Rate limited
                         </span>
                       ) : (
                         <ExternalLink className="w-3 h-3 ml-auto" />
@@ -1249,6 +1300,21 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       <Skeleton className="h-8 w-full" />
                       <Skeleton className="h-8 w-full" />
                     </div>
+                  ) : releasesError && versions.length === 0 ? (
+                    <div className="text-center py-4">
+                      <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-yellow-500 opacity-75" />
+                      {releasesError.includes('Rate limit') ? (
+                        <>
+                          <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Rate Limit Exceeded</p>
+                          <p className="text-xs text-muted-foreground mt-1">{releasesError}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm text-muted-foreground">Failed to load releases</p>
+                          <p className="text-xs text-muted-foreground mt-1">{releasesError}</p>
+                        </>
+                      )}
+                    </div>
                   ) : versions.length > 0 ? (
                     <ScrollArea className="h-[350px] pr-4">
                       <div className="space-y-3">
@@ -1270,14 +1336,13 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 </CardContent>
               </Card>
 
-              {/* Dependencies Card - show if zon exists or loading */}
-              {(hasZon || zonLoading || dependencies.length > 0 || minZigVersion) && (
-                <DependenciesCard 
-                  dependencies={dependencies} 
-                  minZigVersion={minZigVersion}
-                  isLoading={zonLoading} 
-                />
-              )}
+              {/* Dependencies Card - always show (will display error if needed) */}
+              <DependenciesCard 
+                dependencies={dependencies} 
+                minZigVersion={minZigVersion}
+                isLoading={zonLoading} 
+                error={zonError}
+              />
             </div>
           </div>
         </div>

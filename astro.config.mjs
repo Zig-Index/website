@@ -41,5 +41,18 @@ export default defineConfig({
         '@': '/src',
       },
     },
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'highlight': ['highlight.js'],
+            'dexie': ['dexie'],
+            'framer': ['framer-motion'],
+            'react-query': ['@tanstack/react-query'],
+          },
+        },
+      },
+    },
   },
 });
