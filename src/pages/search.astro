@@ -41,7 +41,7 @@ const pageTitle = query
 
 const pageDescription = query
   ? `Search results for "${query}" in Zig Index. Discover ${searchItems.length}+ Zig packages, libraries, tools, and applications. Find the best Zig ecosystem resources for your projects.`
-  : `Search ${searchItems.length}+ curated Zig packages, libraries, and applications. Find the perfect tools, modules, and software for your Zig programming projects. Community-driven Zig package registry.`;
+  : `Search ${searchItems.length}+ Zig packages, libraries, and applications. Find the perfect tools, modules, and software for your Zig programming projects. Unofficial, community-driven Zig package index.`;
 
 // Generate keywords dynamically from search items
 const categoryKeywords = [...new Set(searchItems.map(item => item.category))].filter(Boolean).join(", ");

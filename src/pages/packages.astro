@@ -13,7 +13,7 @@ const schema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   "name": "Zig Packages",
-  "description": `Browse ${stats.totalPackages} curated Zig libraries and packages for your projects.`,
+  "description": `Browse ${stats.totalPackages} Zig libraries and packages for your projects.`,
   "url": `${siteUrl}/packages`,
   "mainEntity": {
     "@type": "ItemList",
@@ -35,7 +35,7 @@ const schema = {
 
 <Layout 
   title="Zig Packages - Libraries & Modules | Zig Index"
-  description={`Browse ${stats.totalPackages} curated Zig packages. Find libraries, modules, and reusable code for your Zig projects.`}
+  description={`Browse ${stats.totalPackages} Zig packages. Find libraries, modules, and reusable code for your Zig projects.`}
   keywords="zig packages, zig libraries, zig modules, zig code, zig dependencies, zig ecosystem, zig index"
   canonicalUrl={`${siteUrl}/packages`}
   schema={schema}
@@ -45,6 +45,6 @@ const schema = {
     registryEntries={packages}
     defaultType="package"
     title="Zig Packages"
-    description={`${stats.totalPackages} curated libraries and modules for Zig development`}
+    description={`${stats.totalPackages} libraries and modules for Zig development`}
   />
 </Layout>

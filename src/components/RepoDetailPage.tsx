@@ -284,8 +284,8 @@ function DependenciesCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Show error message if there's an error and no data */}
-        {error && !minZigVersion && dependencies.length === 0 && (
+        {/* Show error message if there's an error and no data to display */}
+        {error && !minZigVersion && dependencies.length === 0 ? (
           <div className="text-center py-3">
             <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-yellow-500 opacity-75" />
             {error.includes('Rate limit') ? (
@@ -300,78 +300,81 @@ function DependenciesCard({
               </>
             )}
           </div>
-        )}
-        {minZigVersion && (
+        ) : (
           <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Min Zig Version</span>
-              <Badge variant="outline" className="font-mono">{minZigVersion}</Badge>
-            </div>
-            {dependencies.length > 0 && <Separator />}
+            {minZigVersion && (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Min Zig Version</span>
+                  <Badge variant="outline" className="font-mono">{minZigVersion}</Badge>
+                </div>
+                {dependencies.length > 0 && <Separator />}
+              </>
+            )}
+            {dependencies.length > 0 ? (
+              <ScrollArea className="h-[150px] pr-4">
+                <div className="space-y-2">
+                  {dependencies.map((dep, index) => {
+                    const depInfo = getDependencyInfo(dep);
+                    return (
+                      <div key={index} className="flex items-center justify-between text-sm p-1.5 rounded hover:bg-muted/50">
+                        <span className="font-mono text-foreground">{depInfo.name}</span>
+                        <div className="flex items-center gap-2">
+                          {depInfo.type === 'github' && depInfo.repoUrl && (
+                            <a 
+                              href={depInfo.repoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                              title={`View ${depInfo.name} on GitHub`}
+                            >
+                              <Github className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {depInfo.type === 'url' && depInfo.repoUrl && (
+                            <a 
+                              href={depInfo.repoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                              title={`Download from ${depInfo.displayUrl}`}
+                            >
+                              <FileDown className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {depInfo.type === 'path' && (
+                            <span 
+                              className="flex items-center gap-1 text-muted-foreground"
+                              title={`Local path: ${depInfo.displayUrl}`}
+                            >
+                              <FolderOpen className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          {depInfo.type === 'hash' && (
+                            <span 
+                              className="flex items-center gap-1 text-muted-foreground"
+                              title={depInfo.displayUrl}
+                            >
+                              <Hash className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground truncate max-w-[100px]" title={dep.url || dep.hash}>
+                            {depInfo.type === 'github' ? depInfo.displayUrl : ''}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            ) : !minZigVersion ? (
+              <div className="text-center py-3 text-muted-foreground text-sm">
+                <Package className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                <p>No dependencies</p>
+              </div>
+            ) : null}
           </>
         )}
-        {dependencies.length > 0 ? (
-          <ScrollArea className="h-[150px] pr-4">
-            <div className="space-y-2">
-              {dependencies.map((dep, index) => {
-                const depInfo = getDependencyInfo(dep);
-                return (
-                  <div key={index} className="flex items-center justify-between text-sm p-1.5 rounded hover:bg-muted/50">
-                    <span className="font-mono text-foreground">{depInfo.name}</span>
-                    <div className="flex items-center gap-2">
-                      {depInfo.type === 'github' && depInfo.repoUrl && (
-                        <a 
-                          href={depInfo.repoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                          title={`View ${depInfo.name} on GitHub`}
-                        >
-                          <Github className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                      {depInfo.type === 'url' && depInfo.repoUrl && (
-                        <a 
-                          href={depInfo.repoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                          title={`Download from ${depInfo.displayUrl}`}
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                      {depInfo.type === 'path' && (
-                        <span 
-                          className="flex items-center gap-1 text-muted-foreground"
-                          title={`Local path: ${depInfo.displayUrl}`}
-                        >
-                          <FolderOpen className="w-3.5 h-3.5" />
-                        </span>
-                      )}
-                      {depInfo.type === 'hash' && (
-                        <span 
-                          className="flex items-center gap-1 text-muted-foreground"
-                          title={depInfo.displayUrl}
-                        >
-                          <Hash className="w-3.5 h-3.5" />
-                        </span>
-                      )}
-                      <span className="text-xs text-muted-foreground truncate max-w-[100px]" title={dep.url || dep.hash}>
-                        {depInfo.type === 'github' ? depInfo.displayUrl : ''}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        ) : !minZigVersion && !error ? (
-          <div className="text-center py-3 text-muted-foreground text-sm">
-            <Package className="w-6 h-6 mx-auto mb-2 opacity-50" />
-            <p>No dependencies</p>
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   );

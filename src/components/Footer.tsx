@@ -152,9 +152,14 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Zig Index. Open source under MIT License.
-          </p>
+          <div className="text-center sm:text-left">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Zig Index. Open source under MIT License.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Not affiliated with the Zig Software Foundation.
+            </p>
+          </div>
           <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap justify-center">
             Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by{" "}
             <a 

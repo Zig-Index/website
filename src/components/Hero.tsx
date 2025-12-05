@@ -98,7 +98,7 @@ export function Hero({ stats }: HeroProps) {
             variants={itemVariants}
             className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
           >
-            A curated registry for discovering quality Zig packages and applications. 
+            An unofficial, community-driven index for discovering quality Zig packages and applications. 
             Find libraries, tools, and software built by the Zig community.
           </motion.p>
 

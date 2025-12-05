@@ -38,15 +38,22 @@ export function TermsPage({ searchItems = [] }: TermsPageProps) {
             </p>
           </section>
 
+          <section className="mb-8 p-4 bg-muted/50 rounded-lg border">
+            <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
+            <p className="text-sm text-muted-foreground">
+              Zig Index is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. We do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.
+            </p>
+          </section>
+
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Description of Service</h2>
             <p>
-              Zig Index is a community-maintained index of Zig programming language packages and applications. The service provides:
+              Zig Index is an unofficial, community-driven index of Zig programming language packages and applications. The service provides:
             </p>
             <ul className="list-disc pl-6">
               <li>A searchable directory of Zig packages and applications</li>
               <li>Repository information and documentation links</li>
-              <li>Community-contributed package registry data</li>
+              <li>Community-contributed project data</li>
               <li>Search and filtering functionality</li>
             </ul>
           </section>
