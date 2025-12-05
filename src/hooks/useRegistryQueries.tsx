@@ -7,9 +7,13 @@ import {
   fetchRepoStatsWithCache,
   fetchMultipleRepoStatsWithCache,
   fetchRepoReadmeWithCache,
+  fetchRepoReleasesWithCache,
+  fetchRepoZonWithCache,
   checkRateLimit,
   initializeCache,
   type RateLimitInfo,
+  type ReleasesCache,
+  type ZonCache,
 } from "@/lib/cachedFetcher";
 import type { 
   RegistryEntryWithCategory, 
@@ -24,6 +28,8 @@ export const registryQueryKeys = {
   stats: (fullName: string) => ["stats", fullName] as const,
   allStats: ["allStats"] as const,
   readme: (fullName: string) => ["readme", fullName] as const,
+  releases: (fullName: string) => ["releases", fullName] as const,
+  zon: (fullName: string) => ["zon", fullName] as const,
   rateLimit: ["rateLimit"] as const,
 };
 
@@ -76,6 +82,48 @@ export function useRepoReadme(owner: string, repo: string, enabled: boolean = fa
     enabled,
     staleTime: 1000 * 60 * 60, // 1 hour - refresh README hourly
     gcTime: 1000 * 60 * 60 * 24 * 14, // 14 days - keep READMEs cached for 2 weeks
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+}
+
+// Hook: Fetch releases/tags for a repo (only when enabled)
+// Uses IndexedDB cache with 1-hour expiry
+export function useRepoReleases(owner: string, repo: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: registryQueryKeys.releases(`${owner}/${repo}`),
+    queryFn: async () => {
+      const result = await fetchRepoReleasesWithCache(owner, repo);
+      if (result.error && !result.releases) {
+        throw new Error(result.error);
+      }
+      return result.releases;
+    },
+    enabled,
+    staleTime: 1000 * 60 * 60, // 1 hour - refresh releases hourly
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep releases cached for a week
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+}
+
+// Hook: Fetch build.zig.zon for a repo (only when enabled)
+// Uses IndexedDB cache with 1-hour expiry
+export function useRepoZon(owner: string, repo: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: registryQueryKeys.zon(`${owner}/${repo}`),
+    queryFn: async () => {
+      const result = await fetchRepoZonWithCache(owner, repo);
+      if (result.error && !result.zon) {
+        throw new Error(result.error);
+      }
+      return result.zon;
+    },
+    enabled,
+    staleTime: 1000 * 60 * 60, // 1 hour - refresh zon hourly
+    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep zon cached for a week
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

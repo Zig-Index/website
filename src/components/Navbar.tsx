@@ -8,6 +8,8 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
+  SheetDescription,
 } from "./ui/sheet";
 import { 
   Search, 
@@ -276,19 +278,35 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-              <div className="flex flex-col gap-4 mt-6">
+            <SheetContent side="right" className="w-[85vw] max-w-[350px] flex flex-col p-0">
+              {/* Accessible Title (visually hidden) */}
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SheetDescription className="sr-only">Main navigation menu for Zig Index</SheetDescription>
+              
+              {/* Header */}
+              <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
+                <div className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-primary to-primary/70 rounded-lg shadow-lg">
+                  <Zap className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <span className="font-bold text-xl">Zig Index</span>
+              </div>
+
+              <div className="flex flex-col gap-2 p-4 flex-1 overflow-y-auto">
                 {/* Mobile Search */}
-                <div className="relative">
-                  <form onSubmit={handleSearchSubmit}>
+                <div className="relative mb-2">
+                  <form onSubmit={(e) => {
+                    handleSearchSubmit(e);
+                    setIsOpen(false);
+                    window.location.href = `/search?q=${encodeURIComponent(localSearch)}`;
+                  }}>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         type="text"
-                        placeholder="Search..."
+                        placeholder="Search packages & applications..."
                         value={localSearch}
                         onChange={(e) => setLocalSearch(e.target.value)}
-                        className="pl-10 pr-8"
+                        className="pl-10 pr-10 w-full h-12 text-base"
                         aria-label="Search packages and applications"
                       />
                       {localSearch && (
@@ -297,7 +315,7 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
                           variant="ghost"
                           size="icon"
                           onClick={handleClearSearch}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                           title="Clear search"
                           aria-label="Clear search"
                         >
@@ -310,38 +328,52 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
 
                 {/* Mobile Nav Links */}
                 <nav className="flex flex-col gap-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-2">
+                    Browse
+                  </span>
                   {navLinks.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 px-3 py-3 text-base font-medium text-foreground hover:bg-accent rounded-md transition-colors"
+                      className="flex items-center gap-3 px-3 py-3.5 text-base font-medium text-foreground hover:bg-accent rounded-lg transition-colors"
                       title={`Browse ${link.label}`}
                     >
-                      <link.icon className="w-5 h-5" />
+                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                        <link.icon className="w-5 h-5 text-foreground" />
+                      </div>
                       {link.label}
                     </a>
                   ))}
                 </nav>
 
                 {/* Mobile Actions */}
-                <div className="flex flex-col gap-2 pt-4 border-t">
-                  <Button asChild className="justify-start" title="Add your Zig project">
+                <div className="flex flex-col gap-2 pt-4 border-t mt-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-2">
+                    Actions
+                  </span>
+                  <Button asChild className="justify-start h-12 text-base" title="Add your Zig project">
                     <a href="/how-to-add" onClick={() => setIsOpen(false)}>
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-5 h-5 mr-3" />
                       Add Your Project
                     </a>
                   </Button>
-                  <Button variant="outline" asChild title="View on GitHub">
+                  <Button variant="outline" asChild className="justify-start h-12 text-base" title="View on GitHub">
                     <a 
                       href="https://github.com/Zig-Index/zig-index.github.io" 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >
-                      <Github className="w-4 h-4 mr-2" />
+                      <Github className="w-5 h-5 mr-3" />
                       View on GitHub
                     </a>
                   </Button>
+                </div>
+
+                {/* Theme Toggle in Mobile */}
+                <div className="flex items-center justify-between p-4 border-t mt-auto bg-muted/30 -mx-4 -mb-4">
+                  <span className="text-sm font-medium text-muted-foreground">Toggle Theme</span>
+                  <ThemeToggle />
                 </div>
               </div>
             </SheetContent>

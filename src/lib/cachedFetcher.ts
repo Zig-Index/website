@@ -13,9 +13,19 @@ import {
   fetchRepoStats as fetchRepoStatsAPI,
   fetchMultipleRepoStats as fetchMultipleRepoStatsAPI,
   fetchRepoReadme as fetchRepoReadmeAPI,
+  fetchRepoReleases as fetchRepoReleasesAPI,
+  fetchRepoZon as fetchRepoZonAPI,
+  fetchUserProfile as fetchUserProfileAPI,
+  fetchRepoIssues as fetchRepoIssuesAPI,
+  generateZigFetchCommand,
+  generateZigFetchUrl,
   checkRateLimit,
   type ReadmeCache,
   type RateLimitInfo,
+  type ReleasesCache,
+  type ZonCache,
+  type UserProfileCache,
+  type IssuesCache,
 } from './githubFetcher';
 
 import {
@@ -25,14 +35,26 @@ import {
   setCachedMultipleRepoStats,
   getCachedReadme,
   setCachedReadme,
+  getCachedReleases,
+  setCachedReleases,
+  getCachedZon,
+  setCachedZon,
+  getCachedUser,
+  setCachedUser,
+  getCachedIssues,
+  setCachedIssues,
   isCacheFresh,
   getReposNeedingRefresh,
   clearExpiredCache,
   getCacheStats,
   type CachedRepoStats,
+  type CachedReleases,
+  type CachedZon,
+  type CachedUser,
+  type CachedIssues,
 } from './idb-cache';
 
-import type { LiveStats, RepoStatus } from './schemas';
+import type { LiveStats, RepoStatus, RepoVersion, UserProfile, RepoIssuesInfo } from './schemas';
 
 // ============================================
 // Cached Fetch Functions
@@ -282,6 +304,303 @@ export async function fetchRepoReadmeWithCache(
   };
 }
 
+/**
+ * Fetch releases/tags with IndexedDB caching
+ * Falls back to stale cached data if API fails
+ */
+export async function fetchRepoReleasesWithCache(
+  owner: string,
+  repo: string,
+  forceRefresh: boolean = false
+): Promise<{ 
+  releases: ReleasesCache | null; 
+  fromCache: boolean;
+  error?: string;
+  isStale?: boolean;
+}> {
+  const fullName = `${owner}/${repo}`;
+  
+  // Try to get fresh cached data first
+  if (!forceRefresh) {
+    const cached = await getCachedReleases(fullName, true);
+    if (cached) {
+      return {
+        releases: {
+          fullName: cached.fullName,
+          versions: cached.versions,
+          latestVersion: cached.latestVersion,
+          lastFetched: cached.lastFetched,
+        },
+        fromCache: true,
+        isStale: false,
+      };
+    }
+  }
+  
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedReleases(fullName, false);
+  
+  // Fetch from API
+  const result = await fetchRepoReleasesAPI(owner, repo);
+  
+  // If API fetch succeeded, cache and return fresh data
+  if (result.releases) {
+    await setCachedReleases(result.releases);
+    return {
+      releases: result.releases,
+      fromCache: false,
+      isStale: false,
+    };
+  }
+  
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] Releases API failed for ${fullName}, using stale cached data`);
+    return {
+      releases: {
+        fullName: staleCached.fullName,
+        versions: staleCached.versions,
+        latestVersion: staleCached.latestVersion,
+        lastFetched: staleCached.lastFetched,
+      },
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
+  return {
+    releases: result.releases,
+    fromCache: false,
+    error: result.error,
+    isStale: false,
+  };
+}
+
+/**
+ * Fetch build.zig.zon with IndexedDB caching
+ * Falls back to stale cached data if API fails
+ */
+export async function fetchRepoZonWithCache(
+  owner: string,
+  repo: string,
+  forceRefresh: boolean = false
+): Promise<{ 
+  zon: ZonCache | null; 
+  fromCache: boolean;
+  error?: string;
+  isStale?: boolean;
+}> {
+  const fullName = `${owner}/${repo}`;
+  
+  // Try to get fresh cached data first
+  if (!forceRefresh) {
+    const cached = await getCachedZon(fullName, true);
+    if (cached) {
+      return {
+        zon: {
+          fullName: cached.fullName,
+          hasZon: cached.hasZon,
+          name: cached.name,
+          version: cached.version,
+          dependencies: cached.dependencies,
+          minZigVersion: cached.minZigVersion,
+          lastFetched: cached.lastFetched,
+        },
+        fromCache: true,
+        isStale: false,
+      };
+    }
+  }
+  
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedZon(fullName, false);
+  
+  // Fetch from API
+  const result = await fetchRepoZonAPI(owner, repo);
+  
+  // If API fetch succeeded, cache and return fresh data
+  if (result.zon) {
+    await setCachedZon(result.zon);
+    return {
+      zon: result.zon,
+      fromCache: false,
+      isStale: false,
+    };
+  }
+  
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] Zon API failed for ${fullName}, using stale cached data`);
+    return {
+      zon: {
+        fullName: staleCached.fullName,
+        hasZon: staleCached.hasZon,
+        name: staleCached.name,
+        version: staleCached.version,
+        dependencies: staleCached.dependencies,
+        minZigVersion: staleCached.minZigVersion,
+        lastFetched: staleCached.lastFetched,
+      },
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
+  return {
+    zon: result.zon,
+    fromCache: false,
+    error: result.error,
+    isStale: false,
+  };
+}
+
+/**
+ * Fetch user profile with IndexedDB caching
+ * Falls back to stale cached data if API fails
+ */
+export async function fetchUserProfileWithCache(
+  username: string,
+  forceRefresh: boolean = false
+): Promise<{ 
+  user: UserProfile | null; 
+  fromCache: boolean;
+  error?: string;
+  isStale?: boolean;
+}> {
+  // Try to get fresh cached data first
+  if (!forceRefresh) {
+    const cached = await getCachedUser(username, true);
+    if (cached) {
+      return {
+        user: cached.profile,
+        fromCache: true,
+        isStale: false,
+      };
+    }
+  }
+  
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedUser(username, false);
+  
+  // Fetch from API
+  const result = await fetchUserProfileAPI(username);
+  
+  // If API fetch succeeded, cache and return fresh data
+  if (result.user) {
+    await setCachedUser({
+      login: username,
+      profile: result.user,
+      lastFetched: Date.now(),
+    });
+    return {
+      user: result.user,
+      fromCache: false,
+      isStale: false,
+    };
+  }
+  
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] User API failed for ${username}, using stale cached data`);
+    return {
+      user: staleCached.profile,
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
+  return {
+    user: result.user,
+    fromCache: false,
+    error: result.error,
+    isStale: false,
+  };
+}
+
+/**
+ * Fetch repo issues/PR counts with IndexedDB caching
+ * Falls back to stale cached data if API fails
+ */
+export async function fetchRepoIssuesWithCache(
+  owner: string,
+  repo: string,
+  forceRefresh: boolean = false
+): Promise<{ 
+  issues: RepoIssuesInfo | null; 
+  fromCache: boolean;
+  error?: string;
+  isStale?: boolean;
+}> {
+  const fullName = `${owner}/${repo}`;
+  
+  // Try to get fresh cached data first
+  if (!forceRefresh) {
+    const cached = await getCachedIssues(fullName, true);
+    if (cached) {
+      return {
+        issues: {
+          fullName: cached.fullName,
+          openIssues: cached.openIssues,
+          closedIssues: cached.closedIssues,
+          openPullRequests: cached.openPullRequests,
+          closedPullRequests: cached.closedPullRequests,
+          lastFetched: cached.lastFetched,
+        },
+        fromCache: true,
+        isStale: false,
+      };
+    }
+  }
+  
+  // Get stale cached data as fallback (don't check expiry)
+  const staleCached = await getCachedIssues(fullName, false);
+  
+  // Fetch from API
+  const result = await fetchRepoIssuesAPI(owner, repo);
+  
+  // If API fetch succeeded, cache and return fresh data
+  if (result.issues) {
+    await setCachedIssues(result.issues);
+    return {
+      issues: result.issues,
+      fromCache: false,
+      isStale: false,
+    };
+  }
+  
+  // API failed - fall back to stale cached data if available
+  if (result.error && staleCached) {
+    console.log(`[Cache] Issues API failed for ${fullName}, using stale cached data`);
+    return {
+      issues: {
+        fullName: staleCached.fullName,
+        openIssues: staleCached.openIssues,
+        closedIssues: staleCached.closedIssues,
+        openPullRequests: staleCached.openPullRequests,
+        closedPullRequests: staleCached.closedPullRequests,
+        lastFetched: staleCached.lastFetched,
+      },
+      fromCache: true,
+      error: result.error,
+      isStale: true,
+    };
+  }
+  
+  // No cached data available, return the error
+  return {
+    issues: result.issues,
+    fromCache: false,
+    error: result.error,
+    isStale: false,
+  };
+}
+
 // ============================================
 // Background Refresh Functions
 // ============================================
@@ -316,23 +635,21 @@ export async function refreshStaleCacheInBackground(
 
 /**
  * Initialize cache on page load
- * Clears expired entries and returns cache stats
+ * Does NOT clear expired entries - keeps all data for fallback
+ * Only returns cache stats
  */
 export async function initializeCache(): Promise<{
   totalCached: number;
-  expiredCleared: number;
+  staleCount: number;
 }> {
-  // Clear expired entries
-  const expiredCleared = await clearExpiredCache();
-  
-  // Get current stats
+  // Get current stats - don't clear anything, keep all data for fallback
   const stats = await getCacheStats();
   
-  console.log(`[Cache] Initialized: ${stats.totalRepoStats} repos cached, ${stats.totalReadmes} READMEs, ${expiredCleared} expired cleared`);
+  console.log(`[Cache] Initialized: ${stats.totalRepoStats} repos cached, ${stats.totalReadmes} READMEs, ${stats.totalReleases} releases, ${stats.totalZon} zons, ${stats.expiredRepoStats} stale (kept for fallback)`);
   
   return {
     totalCached: stats.totalRepoStats,
-    expiredCleared,
+    staleCount: stats.expiredRepoStats,
   };
 }
 
@@ -342,8 +659,14 @@ export async function initializeCache(): Promise<{
 
 export {
   checkRateLimit,
+  generateZigFetchCommand,
+  generateZigFetchUrl,
   type ReadmeCache,
   type RateLimitInfo,
+  type ReleasesCache,
+  type ZonCache,
+  type UserProfileCache,
+  type IssuesCache,
 };
 
 // Re-export cache utilities
@@ -351,8 +674,16 @@ export {
   getCachedRepoStats,
   getCachedMultipleRepoStats,
   getCachedReadme,
+  getCachedReleases,
+  getCachedZon,
+  getCachedUser,
+  getCachedIssues,
   getCacheStats,
   clearExpiredCache,
   isCacheFresh,
   type CachedRepoStats,
+  type CachedReleases,
+  type CachedZon,
+  type CachedUser,
+  type CachedIssues,
 };

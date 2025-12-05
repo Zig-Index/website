@@ -3,15 +3,17 @@
  * Uses Dexie.js as the ORM for persistent client-side storage
  * 
  * Features:
- * - Caches repo stats and README data
- * - Auto-refresh after 1 hour on revisit
+ * - Caches repo stats, README, and releases data PERMANENTLY
+ * - Data is stored indefinitely until browser data is cleared
+ * - On revisit: tries to refresh if data > 1 hour old
+ * - If refresh fails (rate limit/network): falls back to stored data
  * - Handles duplicates correctly (upserts)
- * - Permanent storage until browser data is cleared
+ * - NEVER auto-deletes cached data - always keeps for fallback
  */
 
 import Dexie, { type Table } from 'dexie';
-import type { LiveStats, RepoStatus } from './schemas';
-import type { ReadmeCache } from './githubFetcher';
+import type { LiveStats, RepoStatus, RepoVersion, ZigDependency, UserProfile, RepoIssuesInfo } from './schemas';
+import type { ReadmeCache, ReleasesCache, ZonCache } from './githubFetcher';
 
 // Cache expiry time: 1 hour in milliseconds
 export const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -42,6 +44,38 @@ export interface CacheMetadata {
   updatedAt: number;
 }
 
+export interface CachedReleases {
+  fullName: string; // Primary key: "owner/repo"
+  versions: RepoVersion[];
+  latestVersion: string | null;
+  lastFetched: number; // Unix timestamp
+}
+
+export interface CachedZon {
+  fullName: string; // Primary key: "owner/repo"
+  hasZon: boolean;
+  name?: string;
+  version?: string;
+  dependencies: ZigDependency[];
+  minZigVersion?: string;
+  lastFetched: number; // Unix timestamp
+}
+
+export interface CachedUser {
+  login: string; // Primary key: username
+  profile: UserProfile;
+  lastFetched: number; // Unix timestamp
+}
+
+export interface CachedIssues {
+  fullName: string; // Primary key: "owner/repo"
+  openIssues: number;
+  closedIssues: number;
+  openPullRequests: number;
+  closedPullRequests: number;
+  lastFetched: number; // Unix timestamp
+}
+
 // ============================================
 // Dexie Database Class
 // ============================================
@@ -49,6 +83,10 @@ export interface CacheMetadata {
 class ZigIndexDB extends Dexie {
   repoStats!: Table<CachedRepoStats, string>;
   readmeCache!: Table<CachedReadme, string>;
+  releasesCache!: Table<CachedReleases, string>;
+  zonCache!: Table<CachedZon, string>;
+  userCache!: Table<CachedUser, string>;
+  issuesCache!: Table<CachedIssues, string>;
   metadata!: Table<CacheMetadata, string>;
 
   constructor() {
@@ -59,6 +97,34 @@ class ZigIndexDB extends Dexie {
     this.version(1).stores({
       repoStats: 'fullName, lastFetched, lastUpdated, status',
       readmeCache: 'fullName, lastFetched',
+      metadata: 'key, updatedAt',
+    });
+    
+    // Version 2: Add releases cache
+    this.version(2).stores({
+      repoStats: 'fullName, lastFetched, lastUpdated, status',
+      readmeCache: 'fullName, lastFetched',
+      releasesCache: 'fullName, lastFetched',
+      metadata: 'key, updatedAt',
+    });
+    
+    // Version 3: Add zon cache for build.zig.zon parsing
+    this.version(3).stores({
+      repoStats: 'fullName, lastFetched, lastUpdated, status',
+      readmeCache: 'fullName, lastFetched',
+      releasesCache: 'fullName, lastFetched',
+      zonCache: 'fullName, lastFetched',
+      metadata: 'key, updatedAt',
+    });
+    
+    // Version 4: Add user and issues cache
+    this.version(4).stores({
+      repoStats: 'fullName, lastFetched, lastUpdated, status',
+      readmeCache: 'fullName, lastFetched',
+      releasesCache: 'fullName, lastFetched',
+      zonCache: 'fullName, lastFetched',
+      userCache: 'login, lastFetched',
+      issuesCache: 'fullName, lastFetched',
       metadata: 'key, updatedAt',
     });
   }
@@ -294,6 +360,187 @@ export async function setCachedReadme(readme: ReadmeCache): Promise<void> {
 }
 
 // ============================================
+// Releases Cache Operations
+// ============================================
+
+/**
+ * Get cached releases by fullName
+ */
+export async function getCachedReleases(
+  fullName: string,
+  checkExpiry: boolean = true
+): Promise<CachedReleases | null> {
+  const database = getDB();
+  if (!database) return null;
+  
+  try {
+    const cached = await database.releasesCache.get(fullName);
+    
+    if (!cached) return null;
+    
+    if (checkExpiry && !isCacheFresh(cached.lastFetched)) {
+      return null;
+    }
+    
+    return cached;
+  } catch (error) {
+    console.warn('[IDB Cache] Error getting cached releases:', error);
+    return null;
+  }
+}
+
+/**
+ * Save or update releases in cache (upsert)
+ */
+export async function setCachedReleases(releases: ReleasesCache): Promise<void> {
+  const database = getDB();
+  if (!database) return;
+  
+  try {
+    await database.releasesCache.put({
+      fullName: releases.fullName,
+      versions: releases.versions,
+      latestVersion: releases.latestVersion,
+      lastFetched: releases.lastFetched,
+    });
+  } catch (error) {
+    console.warn('[IDB Cache] Error saving cached releases:', error);
+  }
+}
+
+// ============================================
+// Zon Cache Operations (build.zig.zon parsing)
+// ============================================
+
+/**
+ * Get cached zon data by fullName
+ */
+export async function getCachedZon(
+  fullName: string,
+  checkExpiry: boolean = true
+): Promise<CachedZon | null> {
+  const database = getDB();
+  if (!database) return null;
+  
+  try {
+    const cached = await database.zonCache.get(fullName);
+    
+    if (!cached) return null;
+    
+    if (checkExpiry && !isCacheFresh(cached.lastFetched)) {
+      return null;
+    }
+    
+    return cached;
+  } catch (error) {
+    console.warn('[IDB Cache] Error getting cached zon:', error);
+    return null;
+  }
+}
+
+/**
+ * Save or update zon data in cache (upsert)
+ */
+export async function setCachedZon(zon: CachedZon): Promise<void> {
+  const database = getDB();
+  if (!database) return;
+  
+  try {
+    await database.zonCache.put(zon);
+  } catch (error) {
+    console.warn('[IDB Cache] Error saving cached zon:', error);
+  }
+}
+
+// ============================================
+// User Cache Operations
+// ============================================
+
+/**
+ * Get cached user profile by login
+ */
+export async function getCachedUser(
+  login: string,
+  checkExpiry: boolean = true
+): Promise<CachedUser | null> {
+  const database = getDB();
+  if (!database) return null;
+  
+  try {
+    const cached = await database.userCache.get(login);
+    
+    if (!cached) return null;
+    
+    if (checkExpiry && !isCacheFresh(cached.lastFetched)) {
+      return null;
+    }
+    
+    return cached;
+  } catch (error) {
+    console.warn('[IDB Cache] Error getting cached user:', error);
+    return null;
+  }
+}
+
+/**
+ * Save or update user profile in cache (upsert)
+ */
+export async function setCachedUser(user: CachedUser): Promise<void> {
+  const database = getDB();
+  if (!database) return;
+  
+  try {
+    await database.userCache.put(user);
+  } catch (error) {
+    console.warn('[IDB Cache] Error saving cached user:', error);
+  }
+}
+
+// ============================================
+// Issues Cache Operations
+// ============================================
+
+/**
+ * Get cached issues by fullName
+ */
+export async function getCachedIssues(
+  fullName: string,
+  checkExpiry: boolean = true
+): Promise<CachedIssues | null> {
+  const database = getDB();
+  if (!database) return null;
+  
+  try {
+    const cached = await database.issuesCache.get(fullName);
+    
+    if (!cached) return null;
+    
+    if (checkExpiry && !isCacheFresh(cached.lastFetched)) {
+      return null;
+    }
+    
+    return cached;
+  } catch (error) {
+    console.warn('[IDB Cache] Error getting cached issues:', error);
+    return null;
+  }
+}
+
+/**
+ * Save or update issues in cache (upsert)
+ */
+export async function setCachedIssues(issues: CachedIssues): Promise<void> {
+  const database = getDB();
+  if (!database) return;
+  
+  try {
+    await database.issuesCache.put(issues);
+  } catch (error) {
+    console.warn('[IDB Cache] Error saving cached issues:', error);
+  }
+}
+
+// ============================================
 // Metadata Operations
 // ============================================
 
@@ -348,6 +595,10 @@ export async function clearAllCache(): Promise<void> {
     await Promise.all([
       database.repoStats.clear(),
       database.readmeCache.clear(),
+      database.releasesCache.clear(),
+      database.zonCache.clear(),
+      database.userCache.clear(),
+      database.issuesCache.clear(),
       database.metadata.clear(),
     ]);
     console.log('[IDB Cache] All cache cleared');
@@ -358,6 +609,9 @@ export async function clearAllCache(): Promise<void> {
 
 /**
  * Clear only expired cache entries
+ * WARNING: This function should NOT be called automatically!
+ * Expired data is still valuable as fallback when API fails.
+ * Only call this manually when user explicitly wants to clear cache.
  */
 export async function clearExpiredCache(): Promise<number> {
   const database = getDB();
@@ -383,6 +637,38 @@ export async function clearExpiredCache(): Promise<number> {
     await database.readmeCache.bulkDelete(expiredReadmes);
     cleared += expiredReadmes.length;
     
+    // Clear expired releases
+    const expiredReleases = await database.releasesCache
+      .where('lastFetched')
+      .below(expiryTime)
+      .primaryKeys();
+    await database.releasesCache.bulkDelete(expiredReleases);
+    cleared += expiredReleases.length;
+    
+    // Clear expired zon data
+    const expiredZon = await database.zonCache
+      .where('lastFetched')
+      .below(expiryTime)
+      .primaryKeys();
+    await database.zonCache.bulkDelete(expiredZon);
+    cleared += expiredZon.length;
+    
+    // Clear expired user profiles
+    const expiredUsers = await database.userCache
+      .where('lastFetched')
+      .below(expiryTime)
+      .primaryKeys();
+    await database.userCache.bulkDelete(expiredUsers);
+    cleared += expiredUsers.length;
+    
+    // Clear expired issues
+    const expiredIssues = await database.issuesCache
+      .where('lastFetched')
+      .below(expiryTime)
+      .primaryKeys();
+    await database.issuesCache.bulkDelete(expiredIssues);
+    cleared += expiredIssues.length;
+    
     if (cleared > 0) {
       console.log(`[IDB Cache] Cleared ${cleared} expired entries`);
     }
@@ -400,6 +686,10 @@ export async function clearExpiredCache(): Promise<number> {
 export async function getCacheStats(): Promise<{
   totalRepoStats: number;
   totalReadmes: number;
+  totalReleases: number;
+  totalZon: number;
+  totalUsers: number;
+  totalIssues: number;
   freshRepoStats: number;
   expiredRepoStats: number;
 }> {
@@ -408,6 +698,10 @@ export async function getCacheStats(): Promise<{
     return {
       totalRepoStats: 0,
       totalReadmes: 0,
+      totalReleases: 0,
+      totalZon: 0,
+      totalUsers: 0,
+      totalIssues: 0,
       freshRepoStats: 0,
       expiredRepoStats: 0,
     };
@@ -416,15 +710,23 @@ export async function getCacheStats(): Promise<{
   try {
     const expiryTime = Date.now() - CACHE_EXPIRY_MS;
     
-    const [totalRepoStats, totalReadmes, expiredRepoStats] = await Promise.all([
+    const [totalRepoStats, totalReadmes, totalReleases, totalZon, totalUsers, totalIssues, expiredRepoStats] = await Promise.all([
       database.repoStats.count(),
       database.readmeCache.count(),
+      database.releasesCache.count(),
+      database.zonCache.count(),
+      database.userCache.count(),
+      database.issuesCache.count(),
       database.repoStats.where('lastFetched').below(expiryTime).count(),
     ]);
     
     return {
       totalRepoStats,
       totalReadmes,
+      totalReleases,
+      totalZon,
+      totalUsers,
+      totalIssues,
       freshRepoStats: totalRepoStats - expiredRepoStats,
       expiredRepoStats,
     };
@@ -433,6 +735,10 @@ export async function getCacheStats(): Promise<{
     return {
       totalRepoStats: 0,
       totalReadmes: 0,
+      totalReleases: 0,
+      totalZon: 0,
+      totalUsers: 0,
+      totalIssues: 0,
       freshRepoStats: 0,
       expiredRepoStats: 0,
     };
@@ -483,6 +789,14 @@ export default {
   getAllCachedRepoStats,
   getCachedReadme,
   setCachedReadme,
+  getCachedReleases,
+  setCachedReleases,
+  getCachedZon,
+  setCachedZon,
+  getCachedUser,
+  setCachedUser,
+  getCachedIssues,
+  setCachedIssues,
   getMetadata,
   setMetadata,
   clearAllCache,

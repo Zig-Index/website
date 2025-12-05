@@ -1,15 +1,67 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { RepoPageClient } from "../components/RepoPageClient";
+import { loadRegistryData, getRegistryStats } from "../lib/registryLoader";
 
 const siteUrl = "https://zig-index.github.io";
+
+// Load all registry entries at build time
+const registryEntries = await loadRegistryData();
+const stats = getRegistryStats(registryEntries);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `${siteUrl}/repo#webpage`,
+      "name": "Repository Details | Zig Index",
+      "description": "View detailed information about Zig packages and applications including stats, README, dependencies, and installation instructions.",
+      "url": `${siteUrl}/repo`,
+      "isPartOf": {
+        "@id": `${siteUrl}/#website`
+      },
+      "breadcrumb": {
+        "@id": `${siteUrl}/repo#breadcrumb`
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${siteUrl}/repo#breadcrumb`,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": siteUrl
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Repository",
+          "item": `${siteUrl}/repo`
+        }
+      ]
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "Zig Package Details",
+      "description": "Detailed view of a Zig package or application with stats, README, dependencies, and installation commands.",
+      "programmingLanguage": {
+        "@type": "ComputerLanguage",
+        "name": "Zig"
+      }
+    }
+  ]
+};
 ---
 
 <Layout 
   title="Repository Details | Zig Index"
-  description="View detailed information about Zig packages and applications including stats, README, and more."
-  keywords="zig package details, zig repository, zig project info, github zig, zig index"
+  description={`View detailed information about Zig packages and applications. Browse ${stats.totalEntries} projects with stats, README, dependencies, installation commands, and more.`}
+  keywords="zig package details, zig repository, zig project info, zig dependencies, zig installation, github zig, zig index, build.zig.zon, zig fetch"
   canonicalUrl={`${siteUrl}/repo`}
+  schema={schema}
 >
-  <RepoPageClient client:load />
+  <RepoPageClient client:load registryEntries={registryEntries} />
 </Layout>

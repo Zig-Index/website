@@ -12,6 +12,7 @@ export const RegistryEntrySchema = z.object({
   homepage: z.string().optional(),
   license: z.string().optional(),
   category: z.string().optional(),
+  download_url: z.string().url().optional(), // Optional download URL for applications
 });
 
 export type RegistryEntry = z.infer<typeof RegistryEntrySchema>;
@@ -39,6 +40,7 @@ export const LiveStatsSchema = z.object({
   updated_at: z.string().nullable(),
   open_issues_count: z.number().default(0),
   archived: z.boolean().default(false),
+  license: z.string().nullable().optional(),
   lastFetched: z.number(),
 });
 
@@ -96,6 +98,153 @@ export const GitHubRepoSchema = z.object({
 export type GitHubRepo = z.infer<typeof GitHubRepoSchema>;
 
 // ============================================
+// GitHub Release/Tag Schemas
+// ============================================
+
+export const GitHubReleaseAssetSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  content_type: z.string(),
+  size: z.number(),
+  download_count: z.number(),
+  browser_download_url: z.string().url(),
+});
+
+export type GitHubReleaseAssetType = z.infer<typeof GitHubReleaseAssetSchema>;
+
+export const GitHubReleaseSchema = z.object({
+  id: z.number(),
+  tag_name: z.string(),
+  name: z.string().nullable(),
+  body: z.string().nullable(),
+  draft: z.boolean(),
+  prerelease: z.boolean(),
+  created_at: z.string(),
+  published_at: z.string().nullable(),
+  html_url: z.string().url(),
+  tarball_url: z.string().url().nullable(),
+  zipball_url: z.string().url().nullable(),
+  assets: z.array(GitHubReleaseAssetSchema).default([]),
+});
+
+export type GitHubRelease = z.infer<typeof GitHubReleaseSchema>;
+
+export const GitHubTagSchema = z.object({
+  name: z.string(),
+  commit: z.object({
+    sha: z.string(),
+    url: z.string().url(),
+  }),
+  zipball_url: z.string().url(),
+  tarball_url: z.string().url(),
+});
+
+export type GitHubTag = z.infer<typeof GitHubTagSchema>;
+
+// Release asset info
+export interface ReleaseAsset {
+  name: string;
+  downloadUrl: string;
+  size: number;
+  contentType: string;
+  downloadCount: number;
+}
+
+// Simplified version info for caching
+export interface RepoVersion {
+  tag: string;
+  name: string | null;
+  isPrerelease: boolean;
+  publishedAt: string | null;
+  tarballUrl: string;
+  zipballUrl: string;
+  assets: ReleaseAsset[];
+  body?: string; // Release notes
+}
+
+// Dependency info parsed from build.zig.zon
+export interface ZigDependency {
+  name: string;
+  url: string;
+  hash?: string;
+}
+
+// Build.zig.zon cache info
+export interface ZonInfo {
+  fullName: string;
+  hasZon: boolean;
+  name?: string;
+  version?: string;
+  dependencies: ZigDependency[];
+  minZigVersion?: string;
+  lastFetched: number;
+}
+
+// ============================================
+// GitHub User Profile Schema
+// ============================================
+
+export const GitHubUserSchema = z.object({
+  login: z.string(),
+  id: z.number(),
+  avatar_url: z.string().url(),
+  html_url: z.string().url(),
+  name: z.string().nullable(),
+  company: z.string().nullable(),
+  blog: z.string().nullable(),
+  location: z.string().nullable(),
+  email: z.string().nullable(),
+  bio: z.string().nullable(),
+  twitter_username: z.string().nullable(),
+  hireable: z.boolean().nullable(),
+  public_repos: z.number(),
+  public_gists: z.number(),
+  followers: z.number(),
+  following: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type GitHubUser = z.infer<typeof GitHubUserSchema>;
+
+// Cached user profile info
+export interface UserProfile {
+  login: string;
+  id: number;
+  avatarUrl: string;
+  htmlUrl: string;
+  name: string | null;
+  company: string | null;
+  blog: string | null;
+  location: string | null;
+  email: string | null;
+  bio: string | null;
+  twitterUsername: string | null;
+  hireable: boolean | null;
+  publicRepos: number;
+  publicGists: number;
+  followers: number;
+  following: number;
+  createdAt: string;
+  updatedAt: string;
+  readmeHtml: string | null;
+  lastFetched: number;
+}
+
+// ============================================
+// Repository Issue/PR Counts
+// ============================================
+
+export interface RepoIssuesInfo {
+  fullName: string;
+  openIssues: number;
+  closedIssues: number;
+  openPullRequests: number;
+  closedPullRequests: number;
+  lastFetched: number;
+}
+
+// ============================================
 // UI Filter & Sort Schemas
 // ============================================
 
@@ -142,6 +291,7 @@ export function convertGitHubRepoToLiveStats(repo: GitHubRepo): LiveStats {
     updated_at: repo.updated_at || null,
     open_issues_count: repo.open_issues_count || 0,
     archived: repo.archived || false,
+    license: repo.license?.name || null,
     lastFetched: Date.now(),
   };
 }

@@ -9,6 +9,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { FileText } from "lucide-react";
+import type { RegistryEntryWithCategory } from "@/lib/schemas";
 
 // Skeleton for initial page load (before URL params are parsed)
 function RepoPageSkeleton() {
@@ -135,7 +136,11 @@ function RepoPageSkeleton() {
 }
 
 // Client-side component that extracts owner/name from URL hash
-export function RepoPageClient() {
+interface RepoPageClientProps {
+  registryEntries?: RegistryEntryWithCategory[];
+}
+
+export function RepoPageClient({ registryEntries = [] }: RepoPageClientProps) {
   const [owner, setOwner] = React.useState<string | null>(null);
   const [name, setName] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -166,6 +171,15 @@ export function RepoPageClient() {
     }
   }, []);
 
+  // Look up the entry from registry
+  const entry = React.useMemo(() => {
+    if (!owner || !name) return undefined;
+    return registryEntries.find(
+      e => e.owner.toLowerCase() === owner.toLowerCase() && 
+           e.repo.toLowerCase() === name.toLowerCase()
+    );
+  }, [registryEntries, owner, name]);
+
   if (error) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -190,7 +204,7 @@ export function RepoPageClient() {
     return <RepoPageSkeleton />;
   }
 
-  return <RepoDetailContent owner={owner} name={name} />;
+  return <RepoDetailContent owner={owner} name={name} entry={entry} />;
 }
 
 export default RepoPageClient;

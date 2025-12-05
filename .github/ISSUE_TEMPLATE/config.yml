@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📦 Add a Package/Application
+    url: https://github.com/Zig-Index/registry/blob/main/README.md#-adding-your-project
+    about: Submit your Zig project to the registry (opens registry repo)
+  - name: 🌐 Zig Index Website
+    url: https://zig-index.github.io
+    about: Visit the Zig Index website
+  - name: 💬 Zig Discord
+    url: https://discord.gg/ziglang
+    about: Join the Zig community on Discord
+  - name: 📖 Zig Documentation
+    url: https://ziglang.org/documentation/master/
+    about: Official Zig language documentation
