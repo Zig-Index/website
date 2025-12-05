@@ -174,12 +174,9 @@ function RegistryPageContent({
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Navbar search is separate - it navigates to search page, not filter this page */}
       <Navbar 
-        onSearch={handleSearch} 
-        searchValue={filter.search}
         searchItems={searchItems}
-        isFilterMode={true}
-        pageType={defaultType === "package" ? "packages" : defaultType === "application" ? "applications" : "all"}
       />
       
       <main className="flex-1 mesh-gradient relative overflow-hidden">

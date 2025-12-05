@@ -61,19 +61,14 @@ export function Navbar({
   pageType = "all"
 }: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [localSearch, setLocalSearch] = React.useState(searchValue || "");
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<SearchItem[]>([]);
   const [typeFilter, setTypeFilter] = React.useState<"all" | "package" | "application">("all");
   const searchRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
-
-  // Sync external search value
-  React.useEffect(() => {
-    if (searchValue !== undefined) {
-      setLocalSearch(searchValue);
-    }
-  }, [searchValue]);
+  
+  // Navbar always has its own local search state - it's a global search that navigates to search page
+  const [localSearch, setLocalSearch] = React.useState("");
 
   // Build search index
   const fuse = React.useMemo(() => {
@@ -123,34 +118,24 @@ export function Navbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Navigate to search page on submit
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
-    
-    if (isFilterMode) {
-      // In filter mode, just call onSearch to filter the page
-      onSearch?.(localSearch);
-    } else {
-      // Navigate to search page
-      onSearch?.(localSearch);
+    if (localSearch.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(localSearch.trim())}`;
     }
   };
 
-  // Debounced search for filter mode
-  React.useEffect(() => {
-    if (isFilterMode && onSearch) {
-      const timer = setTimeout(() => {
-        onSearch(localSearch);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [localSearch, isFilterMode, onSearch]);
+  // Handle search input change - just update local state for suggestions
+  const handleSearchInputChange = (value: string) => {
+    setLocalSearch(value);
+  };
 
   const handleClearSearch = () => {
     setLocalSearch("");
     setSuggestions([]);
     setShowSuggestions(false);
-    onSearch?.("");
     inputRef.current?.focus();
   };
 
@@ -204,7 +189,7 @@ export function Navbar({
                 placeholder="Search packages & applications..."
                 value={localSearch}
                 onChange={(e) => {
-                  setLocalSearch(e.target.value);
+                  handleSearchInputChange(e.target.value);
                   setShowSuggestions(true);
                 }}
                 onFocus={() => setShowSuggestions(true)}
@@ -425,7 +410,7 @@ export function Navbar({
                         type="text"
                         placeholder="Search packages & applications..."
                         value={localSearch}
-                        onChange={(e) => setLocalSearch(e.target.value)}
+                        onChange={(e) => handleSearchInputChange(e.target.value)}
                         className="pl-10 pr-10 w-full h-12 text-base"
                         aria-label="Search packages and applications"
                       />

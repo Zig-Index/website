@@ -53,7 +53,9 @@ export function Filters({
 }: FiltersProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [localFilter, setLocalFilter] = React.useState(filter);
+  // Local search input state - separate from navbar search
   const [searchInput, setSearchInput] = React.useState(filter.search || "");
+  const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const activeFilterCount = React.useMemo(() => {
     let count = 0;
@@ -66,26 +68,51 @@ export function Filters({
     return count;
   }, [filter]);
 
+  // Handle search input change with debounce
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    
+    // Clear any pending debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    // Debounce the filter update
+    debounceRef.current = setTimeout(() => {
+      onFilterChange({ ...filter, search: value || undefined });
+    }, 300); // 300ms debounce for filtering
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFilterChange({ ...filter, search: searchInput });
+    // Clear debounce and apply immediately
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    onFilterChange({ ...filter, search: searchInput || undefined });
   };
 
   const handleSearchClear = () => {
     setSearchInput("");
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
     onFilterChange({ ...filter, search: undefined });
   };
 
-  // Dynamic search with debounce
+  // Cleanup debounce on unmount
   React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchInput !== (filter.search || "")) {
-        onFilterChange({ ...filter, search: searchInput || undefined });
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
       }
-    }, 300); // 300ms debounce
+    };
+  }, []);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchInput]);
+  // Sync search input when filter.search changes externally
+  React.useEffect(() => {
+    setSearchInput(filter.search || "");
+  }, [filter.search]);
 
   const handleApplyFilters = () => {
     onFilterChange(localFilter);
@@ -101,7 +128,6 @@ export function Filters({
 
   React.useEffect(() => {
     setLocalFilter(filter);
-    setSearchInput(filter.search || "");
   }, [filter]);
 
   return (
@@ -116,7 +142,7 @@ export function Filters({
               type="search"
               placeholder="Search packages, applications..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-8 w-full"
               aria-label="Search repositories"
             />
