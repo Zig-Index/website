@@ -697,12 +697,12 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
               <span className="text-foreground">{fullName}</span>
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 overflow-hidden">
               {/* Title and Meta */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">{displayData.name}</h1>
+                  <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold break-words">{displayData.name}</h1>
                     <p className="text-muted-foreground">
                       by{" "}
                       <a 
@@ -715,7 +715,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   </div>
                 </div>
 
-                <p className="text-lg text-muted-foreground mb-4">
+                <p className="text-base sm:text-lg text-muted-foreground mb-4 break-words">
                   {displayData.description}
                 </p>
 
@@ -1036,7 +1036,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </div>
                   ) : readme?.readme_html ? (
                     <div 
-                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden"
+                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden overflow-y-visible break-words"
                       dangerouslySetInnerHTML={{ __html: readme.readme_html }}
                     />
                   ) : (

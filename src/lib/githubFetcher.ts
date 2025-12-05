@@ -144,6 +144,38 @@ function parseRateLimitHeaders(headers: Headers): RateLimitInfo | null {
   return null;
 }
 
+// Global rate limit state to avoid redundant API calls when rate limited
+let globalRateLimitState: { isLimited: boolean; resetTime: number } = {
+  isLimited: false,
+  resetTime: 0,
+};
+
+// Check if we're currently rate limited
+function isRateLimited(): boolean {
+  if (!globalRateLimitState.isLimited) return false;
+  // Check if rate limit has reset
+  if (Date.now() >= globalRateLimitState.resetTime) {
+    globalRateLimitState.isLimited = false;
+    globalRateLimitState.resetTime = 0;
+    return false;
+  }
+  return true;
+}
+
+// Update global rate limit state
+function updateRateLimitState(rateLimit: RateLimitInfo | null, isError403: boolean = false): void {
+  if (isError403 || (rateLimit && rateLimit.remaining === 0)) {
+    globalRateLimitState.isLimited = true;
+    globalRateLimitState.resetTime = rateLimit?.reset || (Date.now() + 60 * 60 * 1000); // Default 1 hour
+  }
+}
+
+// Get rate limit error message
+function getRateLimitError(): string {
+  const resetDate = new Date(globalRateLimitState.resetTime);
+  return `Rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`;
+}
+
 // Get auth headers
 // Token can be set via:
 // 1. Environment variable GITHUB_TOKEN or GH_TOKEN (set in .env file or CI)
@@ -184,6 +216,17 @@ export async function fetchRepoStats(
   repo: string
 ): Promise<{ stats: LiveStats | null; rateLimit: RateLimitInfo | null; status: RepoStatus; error?: string }> {
   const fullName = `${owner}/${repo}`;
+  
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return {
+      stats: null,
+      rateLimit: null,
+      status: "unknown",
+      error: getRateLimitError(),
+    };
+  }
+  
   const headers = getAuthHeaders();
   
   try {
@@ -192,12 +235,13 @@ export async function fetchRepoStats(
     
     const rateLimit = parseRateLimitHeaders(response.headers);
     
-    if (response.status === 403 && rateLimit?.remaining === 0) {
+    if (response.status === 403) {
+      updateRateLimitState(rateLimit, true);
       return {
         stats: null,
         rateLimit,
         status: "unknown",
-        error: `Rate limit exceeded. Resets at ${new Date(rateLimit.reset).toLocaleTimeString()}`,
+        error: getRateLimitError(),
       };
     }
     
@@ -264,12 +308,25 @@ export async function fetchRepoReadme(
   repo: string
 ): Promise<{ readme: ReadmeCache | null; error?: string }> {
   const fullName = `${owner}/${repo}`;
+  
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return { readme: null, error: getRateLimitError() };
+  }
+  
   const headers = getAuthHeaders();
   headers["Accept"] = "application/vnd.github.v3.raw";
   
   try {
     const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/readme`;
     const response = await fetch(url, { headers });
+    
+    // Handle rate limit
+    if (response.status === 403) {
+      const rateLimit = parseRateLimitHeaders(response.headers);
+      updateRateLimitState(rateLimit, true);
+      return { readme: null, error: getRateLimitError() };
+    }
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -357,12 +414,25 @@ export async function fetchRepoReleases(
   repo: string
 ): Promise<{ releases: ReleasesCache | null; error?: string }> {
   const fullName = `${owner}/${repo}`;
+  
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return { releases: null, error: getRateLimitError() };
+  }
+  
   const headers = getAuthHeaders();
   
   try {
     // First try to fetch releases
     const releasesUrl = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases?per_page=30`;
     const releasesResponse = await fetch(releasesUrl, { headers });
+    
+    // Handle rate limit
+    if (releasesResponse.status === 403) {
+      const rateLimit = parseRateLimitHeaders(releasesResponse.headers);
+      updateRateLimitState(rateLimit, true);
+      return { releases: null, error: getRateLimitError() };
+    }
     
     if (releasesResponse.ok) {
       const releasesData = await releasesResponse.json();
@@ -413,8 +483,20 @@ export async function fetchRepoReleases(
     }
     
     // Fallback to tags if no releases found
+    // Check rate limit again before tags request
+    if (isRateLimited()) {
+      return { releases: null, error: getRateLimitError() };
+    }
+    
     const tagsUrl = `${GITHUB_API_BASE}/repos/${owner}/${repo}/tags?per_page=30`;
     const tagsResponse = await fetch(tagsUrl, { headers });
+    
+    // Handle rate limit
+    if (tagsResponse.status === 403) {
+      const rateLimit = parseRateLimitHeaders(tagsResponse.headers);
+      updateRateLimitState(rateLimit, true);
+      return { releases: null, error: getRateLimitError() };
+    }
     
     if (!tagsResponse.ok) {
       return { releases: null, error: `Failed to fetch tags: ${tagsResponse.status}` };
@@ -583,16 +665,43 @@ export async function fetchRepoZon(
   branch: string = "main"
 ): Promise<{ zon: ZonCache | null; error?: string }> {
   const fullName = `${owner}/${repo}`;
+  
+  // Check global rate limit before making any requests
+  if (isRateLimited()) {
+    return {
+      zon: null,
+      error: getRateLimitError(),
+    };
+  }
+  
   const headers = getAuthHeaders();
   headers["Accept"] = "application/vnd.github.v3.raw";
   
-  // Try multiple possible default branches
-  const branches = [branch, "master", "main", "develop"];
+  // Try multiple possible default branches, but stop on rate limit
+  const branches = [branch, "master", "main", "develop"].filter((v, i, a) => a.indexOf(v) === i); // Unique branches
   
   for (const tryBranch of branches) {
+    // Check rate limit between attempts
+    if (isRateLimited()) {
+      return {
+        zon: null,
+        error: getRateLimitError(),
+      };
+    }
+    
     try {
       const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/build.zig.zon?ref=${tryBranch}`;
       const response = await fetch(url, { headers });
+      
+      // Handle rate limit - stop trying more branches
+      if (response.status === 403) {
+        const rateLimit = parseRateLimitHeaders(response.headers);
+        updateRateLimitState(rateLimit, true);
+        return {
+          zon: null,
+          error: getRateLimitError(),
+        };
+      }
       
       if (response.status === 404) {
         continue; // Try next branch
@@ -644,10 +753,22 @@ export type UserProfileCache = UserProfile;
 export async function fetchUserProfile(
   username: string
 ): Promise<{ user: UserProfile | null; error?: string }> {
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return { user: null, error: getRateLimitError() };
+  }
+  
   const headers = getAuthHeaders();
   
   try {
     const response = await fetch(`${GITHUB_API_BASE}/users/${username}`, { headers });
+    
+    // Handle rate limit
+    if (response.status === 403) {
+      const rateLimit = parseRateLimitHeaders(response.headers);
+      updateRateLimitState(rateLimit, true);
+      return { user: null, error: getRateLimitError() };
+    }
     
     if (response.status === 404) {
       return { user: null, error: "User not found" };
@@ -725,6 +846,12 @@ export async function fetchRepoIssues(
   repo: string
 ): Promise<{ issues: RepoIssuesInfo | null; error?: string }> {
   const fullName = `${owner}/${repo}`;
+  
+  // Check global rate limit before making request
+  if (isRateLimited()) {
+    return { issues: null, error: getRateLimitError() };
+  }
+  
   const headers = getAuthHeaders();
   
   try {
@@ -741,6 +868,14 @@ export async function fetchRepoIssues(
       fetch(`${GITHUB_API_BASE}/search/issues?q=${encodeURIComponent(openPRsQuery)}&per_page=1`, { headers }),
       fetch(`${GITHUB_API_BASE}/search/issues?q=${encodeURIComponent(closedPRsQuery)}&per_page=1`, { headers }),
     ]);
+    
+    // Check for rate limit on any response
+    if (openIssuesRes.status === 403 || closedIssuesRes.status === 403 || 
+        openPRsRes.status === 403 || closedPRsRes.status === 403) {
+      const rateLimit = parseRateLimitHeaders(openIssuesRes.headers);
+      updateRateLimitState(rateLimit, true);
+      return { issues: null, error: getRateLimitError() };
+    }
     
     if (!openIssuesRes.ok || !closedIssuesRes.ok || !openPRsRes.ok || !closedPRsRes.ok) {
       return { issues: null, error: "Failed to fetch issue counts" };

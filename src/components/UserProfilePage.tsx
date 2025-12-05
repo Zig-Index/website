@@ -260,9 +260,9 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
-      <main className="flex-1 mesh-gradient relative overflow-hidden">
+      <main className="flex-1 mesh-gradient relative overflow-x-hidden">
         {/* Hero Header with SaaS-style gradient */}
         <section className="relative overflow-hidden">
           {/* Animated gradient background */}
@@ -314,9 +314,9 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
               </div>
 
               {/* User Details */}
-              <div className="flex-1 text-center lg:text-left">
+              <div className="flex-1 text-center lg:text-left min-w-0">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 mb-2">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">
                     {user?.name || username}
                   </h1>
                   {user?.hireable && (
@@ -324,12 +324,12 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
                   )}
                 </div>
                 
-                <p className="text-lg text-muted-foreground mb-4">
+                <p className="text-base sm:text-lg text-muted-foreground mb-4">
                   @{username}
                 </p>
 
                 {user?.bio && (
-                  <p className="text-muted-foreground mb-6 max-w-2xl">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-2xl break-words">
                     {user.bio}
                   </p>
                 )}
