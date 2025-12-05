@@ -6,6 +6,8 @@ A curated registry for discovering Zig packages and applications.
 
 > Your [Merged PRs](https://github.com/Zig-Index/registry/pulls) will appear on the live site within 30 minutes automatically!
 
+**Zig Index is an independent and unofficial registry of Zig packages and applications. It is not affiliated with, endorsed by, or maintained by the Zig Software Foundation or any of its founders. All packages, libraries, and applications listed on this website are owned and maintained by their respective developers and the community. No ownership or responsibility is claimed over any third-party software hosted or indexed. I do not own or claim any rights to trademarks, logos, or names referenced or displayed; all such assets belong to their respective owners.**
+
 ## Features
 
 - 📦 **Curated Registry** - Quality-focused collection of Zig projects
