@@ -86,11 +86,15 @@ export function HowToAddPage({ searchItems = [] }: HowToAddPageProps) {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden mesh-gradient hero-gradient py-20">
+        <section className="relative overflow-hidden min-h-[40vh] flex items-center py-16 sm:py-20">
+          {/* Full gradient background */}
+          <div className="absolute inset-0 mesh-gradient hero-gradient" />
+          
           {/* Animated background */}
-          <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-10 left-[10%] w-72 h-72 bg-linear-to-r from-primary/15 to-purple-500/15 rounded-full blur-3xl blob morph" />
             <div className="absolute bottom-10 right-[10%] w-80 h-80 bg-linear-to-r from-blue-500/10 to-primary/10 rounded-full blur-3xl blob blob-delay-1" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-r from-green-500/5 to-cyan-500/5 rounded-full blur-3xl blob blob-delay-2" />
             {/* Grid pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[60px_60px]" />
           </div>

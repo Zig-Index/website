@@ -26,7 +26,11 @@ import {
   User,
   Hash,
   FileDown,
-  FolderOpen
+  FolderOpen,
+  ChevronDown,
+  Monitor,
+  Apple,
+  Terminal
 } from "lucide-react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
@@ -37,6 +41,18 @@ import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 import { ScrollArea } from "./ui/scroll-area";
 import { EmptyState } from "./SyncStatus";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "./ui/dropdown-menu";
 import { 
   fetchRepoStatsWithCache, 
   fetchRepoReadmeWithCache, 
@@ -762,6 +778,131 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </Badge>
                   )}
                 </div>
+
+                {/* Application Downloads Dropdown */}
+                {displayData.type === "application" && (
+                  <div className="mb-4">
+                    {versions.length > 0 ? (
+                      (() => {
+                        const latestRelease = versions[0];
+                        const hasAssets = latestRelease.assets && latestRelease.assets.length > 0;
+                        
+                        // Helper to detect OS from asset name
+                        const getOsIcon = (name: string) => {
+                          const lowerName = name.toLowerCase();
+                          if (lowerName.includes('windows') || lowerName.includes('win32') || lowerName.includes('win64') || lowerName.endsWith('.exe') || lowerName.endsWith('.msi')) {
+                            return <Monitor className="w-4 h-4" />;
+                          }
+                          if (lowerName.includes('macos') || lowerName.includes('darwin') || lowerName.includes('apple') || lowerName.endsWith('.dmg')) {
+                            return <Apple className="w-4 h-4" />;
+                          }
+                          if (lowerName.includes('linux') || lowerName.endsWith('.deb') || lowerName.endsWith('.rpm') || lowerName.endsWith('.appimage')) {
+                            return <Terminal className="w-4 h-4" />;
+                          }
+                          return <FileDown className="w-4 h-4" />;
+                        };
+
+                        // Format file size
+                        const formatSize = (bytes: number) => {
+                          if (bytes === 0) return '';
+                          const k = 1024;
+                          const sizes = ['B', 'KB', 'MB', 'GB'];
+                          const i = Math.floor(Math.log(bytes) / Math.log(k));
+                          return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+                        };
+
+                        return (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="default" className="gap-2 rounded-lg">
+                                <Download className="w-4 h-4" />
+                                Download {latestRelease.tag}
+                                <ChevronDown className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-80 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto rounded-lg">
+                              <DropdownMenuLabel className="flex items-center gap-2">
+                                <Tag className="w-4 h-4" />
+                                {latestRelease.tag}
+                                {latestRelease.isPrerelease && (
+                                  <Badge variant="outline" className="text-xs ml-auto">Pre-release</Badge>
+                                )}
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              
+                              {hasAssets ? (
+                                <>
+                                  <DropdownMenuGroup>
+                                    {latestRelease.assets.map((asset) => (
+                                      <DropdownMenuItem key={asset.name} asChild>
+                                        <a 
+                                          href={asset.downloadUrl} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-3 cursor-pointer"
+                                        >
+                                          {getOsIcon(asset.name)}
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-medium truncate text-sm">{asset.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {formatSize(asset.size)}
+                                              {asset.downloadCount > 0 && ` • ${asset.downloadCount.toLocaleString()} downloads`}
+                                            </p>
+                                          </div>
+                                        </a>
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuGroup>
+                                  <DropdownMenuSeparator />
+                                </>
+                              ) : null}
+                              
+                              {/* Source code downloads */}
+                              <DropdownMenuGroup>
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">Source Code</DropdownMenuLabel>
+                                <DropdownMenuItem asChild>
+                                  <a 
+                                    href={latestRelease.zipballUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 cursor-pointer"
+                                  >
+                                    <FolderOpen className="w-4 h-4" />
+                                    <span>Source Code (ZIP)</span>
+                                  </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <a 
+                                    href={latestRelease.tarballUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 cursor-pointer"
+                                  >
+                                    <FolderOpen className="w-4 h-4" />
+                                    <span>Source Code (TAR.GZ)</span>
+                                  </a>
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        );
+                      })()
+                    ) : (
+                      <Button variant="outline" asChild>
+                        <a 
+                          href={`${displayData.htmlUrl}/releases`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          No releases yet
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
@@ -780,8 +921,8 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </a>
                   </Button>
                 )}
-                {/* Download button for packages and applications with download_url */}
-                {displayData.downloadUrl && (
+                {/* Download button for packages only (applications use dropdown) */}
+                {displayData.downloadUrl && displayData.type !== "application" && (
                   <Button variant="secondary" asChild>
                     <a href={displayData.downloadUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4 mr-2" />
@@ -841,7 +982,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                     </div>
                   ) : readme?.readme_html ? (
                     <div 
-                      className="prose prose-neutral dark:prose-invert max-w-none"
+                      className="prose prose-neutral dark:prose-invert max-w-none overflow-x-hidden"
                       dangerouslySetInnerHTML={{ __html: readme.readme_html }}
                     />
                   ) : (
