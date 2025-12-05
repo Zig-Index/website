@@ -255,11 +255,6 @@ function UserProfilePageContent({ username, registryEntries = [] }: UserProfileP
               onClick: () => window.location.href = "/",
             }}
           />
-          {isRateLimit && (
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              Tip: Add a GitHub token to increase rate limits
-            </p>
-          )}
         </main>
         <Footer />
       </div>

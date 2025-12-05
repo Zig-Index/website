@@ -1069,9 +1069,6 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                         <>
                           <p className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">GitHub Rate Limit Exceeded</p>
                           <p className="text-sm text-muted-foreground">{readmeError}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Tip: Add a GitHub token to increase rate limits
-                          </p>
                         </>
                       ) : (
                         <>
