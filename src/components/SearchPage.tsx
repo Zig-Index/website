@@ -116,6 +116,8 @@ export function SearchPage({ initialQuery = "", items }: SearchPageProps) {
         onSearch={handleNavSearch} 
         searchValue={searchQuery}
         searchItems={items}
+        isFilterMode={true}
+        pageType="search"
       />
       
       <main className="flex-1 mesh-gradient relative overflow-hidden">
@@ -338,18 +340,18 @@ function SearchResultSkeleton({ index }: { index: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="bg-card border rounded-xl p-5"
+      className="bg-card border rounded-xl p-3 sm:p-5"
     >
-      <div className="flex items-start gap-4">
-        <Skeleton className="w-11 h-11 rounded-lg shrink-0" />
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-5 w-16 rounded-full" />
+      <div className="flex items-start gap-3 sm:gap-4">
+        <Skeleton className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg shrink-0" />
+        <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-4 sm:h-5 w-24 sm:w-32" />
+            <Skeleton className="h-4 sm:h-5 w-14 sm:w-16 rounded-full" />
           </div>
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-20 mt-1" />
+          <Skeleton className="h-3 sm:h-4 w-full" />
+          <Skeleton className="h-3 sm:h-4 w-2/3 sm:w-3/4" />
+          <Skeleton className="h-2.5 sm:h-3 w-16 sm:w-20 mt-1" />
         </div>
       </div>
     </motion.div>

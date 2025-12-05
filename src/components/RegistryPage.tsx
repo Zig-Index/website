@@ -178,6 +178,8 @@ function RegistryPageContent({
         onSearch={handleSearch} 
         searchValue={filter.search}
         searchItems={searchItems}
+        isFilterMode={true}
+        pageType={defaultType === "package" ? "packages" : defaultType === "application" ? "applications" : "all"}
       />
       
       <main className="flex-1 mesh-gradient relative overflow-hidden">

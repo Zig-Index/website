@@ -137,8 +137,8 @@ function InstallationCommands({
   if (zonLoading) {
     return (
       <div className="space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-3 sm:h-4 w-24 sm:w-32" />
+        <Skeleton className="h-8 sm:h-10 w-full" />
       </div>
     );
   }
@@ -259,9 +259,9 @@ function DependenciesCard({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="h-5 sm:h-6 w-full" />
+            <Skeleton className="h-5 sm:h-6 w-2/3 sm:w-3/4" />
+            <Skeleton className="h-5 sm:h-6 w-1/2 sm:w-2/3" />
           </div>
         </CardContent>
       </Card>
@@ -641,6 +641,17 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
   // Build display data from entry and/or stats
   // Show entry data immediately, stats will load separately
   // License fallback: entry.license -> stats.license (from GitHub API)
+  // Download URL fallback: entry.download_url -> release tarball -> codeload main branch
+  const getDownloadUrl = () => {
+    if (entry?.download_url) return entry.download_url;
+    if (latestVersion && versions.length > 0) {
+      const release = versions.find(v => v.tag === latestVersion);
+      if (release?.tarballUrl) return release.tarballUrl;
+    }
+    // Fallback to codeload URL for main branch
+    return `https://codeload.github.com/${owner}/${name}/tar.gz/refs/heads/main`;
+  };
+
   const displayData = {
     name: entry?.name || name,
     owner: entry?.owner || owner,
@@ -651,7 +662,8 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
     category: entry?.category,
     type: entry?.type,
     htmlUrl: entry?.htmlUrl || `https://github.com/${owner}/${name}`,
-    downloadUrl: entry?.download_url || (latestVersion ? versions.find(v => v.tag === latestVersion)?.tarballUrl : undefined),
+    downloadUrl: getDownloadUrl(),
+    hasReleases: versions.length > 0,
     // From stats (will be undefined while loading)
     topics: stats?.topics || [],
     stargazers_count: stats?.stargazers_count,
@@ -888,18 +900,60 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                         );
                       })()
                     ) : (
-                      <Button variant="outline" asChild>
-                        <a 
-                          href={`${displayData.htmlUrl}/releases`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="gap-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          No releases yet
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </Button>
+                      // No releases - provide direct download from main branch
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="default" className="gap-2 rounded-lg">
+                            <Download className="w-4 h-4" />
+                            Download (main)
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-80 max-w-[calc(100vw-2rem)] rounded-lg">
+                          <DropdownMenuLabel className="flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            main branch (latest)
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Source Code</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <a 
+                                href={`https://codeload.github.com/${owner}/${name}/zip/refs/heads/main`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 cursor-pointer"
+                              >
+                                <FolderOpen className="w-4 h-4" />
+                                <span>Source Code (ZIP)</span>
+                              </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <a 
+                                href={`https://codeload.github.com/${owner}/${name}/tar.gz/refs/heads/main`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 cursor-pointer"
+                              >
+                                <FolderOpen className="w-4 h-4" />
+                                <span>Source Code (TAR.GZ)</span>
+                              </a>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <a 
+                              href={`${displayData.htmlUrl}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 cursor-pointer text-muted-foreground"
+                            >
+                              <Github className="w-4 h-4" />
+                              <span>View on GitHub</span>
+                            </a>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 )}
@@ -926,7 +980,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                   <Button variant="secondary" asChild>
                     <a href={displayData.downloadUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4 mr-2" />
-                      Download {latestVersion ? `(${latestVersion})` : ""}
+                      Download {latestVersion ? `(${latestVersion})` : "(main)"}
                     </a>
                   </Button>
                 )}
@@ -971,14 +1025,14 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 </CardHeader>
                 <CardContent>
                   {readmeLoading ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-32 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <Skeleton className="h-5 sm:h-6 w-2/3 sm:w-3/4" />
+                      <Skeleton className="h-3 sm:h-4 w-full" />
+                      <Skeleton className="h-3 sm:h-4 w-full" />
+                      <Skeleton className="h-3 sm:h-4 w-1/2 sm:w-2/3" />
+                      <Skeleton className="h-24 sm:h-32 w-full" />
+                      <Skeleton className="h-3 sm:h-4 w-full" />
+                      <Skeleton className="h-3 sm:h-4 w-4/5 sm:w-5/6" />
                     </div>
                   ) : readme?.readme_html ? (
                     <div 
@@ -1009,7 +1063,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       Stars
                     </span>
                     {statsLoading ? (
-                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                     ) : (
                       <span className="font-semibold">{formatNumber(displayData.stargazers_count ?? 0)}</span>
                     )}
@@ -1021,7 +1075,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       Forks
                     </span>
                     {statsLoading ? (
-                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                     ) : (
                       <span className="font-semibold">{formatNumber(displayData.forks_count ?? 0)}</span>
                     )}
@@ -1033,7 +1087,7 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                       Watchers
                     </span>
                     {statsLoading ? (
-                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-4 sm:h-5 w-10 sm:w-12" />
                     ) : (
                       <span className="font-semibold">{formatNumber(displayData.watchers_count ?? 0)}</span>
                     )}
@@ -1046,22 +1100,22 @@ function RepoDetailPageContent({ owner, name, entry }: RepoDetailPageProps) {
                 <CardHeader>
                   <CardTitle>Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   {statsLoading ? (
                     <>
                       <div className="flex items-center justify-between">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
+                        <Skeleton className="h-5 sm:h-6 w-14 sm:w-16 rounded-full" />
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 sm:h-4 w-14 sm:w-16" />
+                        <Skeleton className="h-3 sm:h-4 w-20 sm:w-24" />
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
+                        <Skeleton className="h-3 sm:h-4 w-24 sm:w-28" />
                       </div>
                     </>
                   ) : (

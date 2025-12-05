@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -20,7 +21,8 @@ import {
   Zap, 
   Plus,
   ArrowRight,
-  X
+  X,
+  Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -40,6 +42,10 @@ interface NavbarProps {
   onSearch?: (query: string) => void;
   searchValue?: string;
   searchItems?: SearchItem[];
+  /** If true, search acts as a filter for the current page instead of navigating */
+  isFilterMode?: boolean;
+  /** The type of page we're on (for filtering context) */
+  pageType?: "packages" | "applications" | "search" | "all";
 }
 
 const navLinks = [
@@ -47,13 +53,27 @@ const navLinks = [
   { href: "/applications", label: "Applications", icon: Cpu },
 ];
 
-export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps) {
+export function Navbar({ 
+  onSearch, 
+  searchValue, 
+  searchItems = [],
+  isFilterMode = false,
+  pageType = "all"
+}: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [localSearch, setLocalSearch] = React.useState(searchValue || "");
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<SearchItem[]>([]);
+  const [typeFilter, setTypeFilter] = React.useState<"all" | "package" | "application">("all");
   const searchRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Sync external search value
+  React.useEffect(() => {
+    if (searchValue !== undefined) {
+      setLocalSearch(searchValue);
+    }
+  }, [searchValue]);
 
   // Build search index
   const fuse = React.useMemo(() => {
@@ -63,6 +83,7 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
         { name: "name", weight: 2 },
         { name: "description", weight: 1 },
         { name: "owner", weight: 0.8 },
+        { name: "category", weight: 0.5 },
       ],
       threshold: 0.4,
       ignoreLocation: true,
@@ -71,13 +92,25 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
 
   // Update suggestions when search changes
   React.useEffect(() => {
-    if (!localSearch.trim() || !fuse) {
-      setSuggestions([]);
-      return;
+    let itemsToShow: SearchItem[] = [];
+    
+    if (!localSearch.trim()) {
+      // Show all items when focused but no search query (grouped by type)
+      itemsToShow = [...searchItems];
+    } else if (fuse) {
+      // Show search results
+      const results = fuse.search(localSearch);
+      itemsToShow = results.map(r => r.item);
     }
-    const results = fuse.search(localSearch).slice(0, 8);
-    setSuggestions(results.map(r => r.item));
-  }, [localSearch, fuse]);
+    
+    // Apply type filter
+    if (typeFilter !== "all") {
+      itemsToShow = itemsToShow.filter(item => item.type === typeFilter);
+    }
+    
+    // Limit to 12 suggestions
+    setSuggestions(itemsToShow.slice(0, 12));
+  }, [localSearch, fuse, searchItems, typeFilter]);
 
   // Close suggestions when clicking outside
   React.useEffect(() => {
@@ -93,8 +126,25 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
-    onSearch?.(localSearch);
+    
+    if (isFilterMode) {
+      // In filter mode, just call onSearch to filter the page
+      onSearch?.(localSearch);
+    } else {
+      // Navigate to search page
+      onSearch?.(localSearch);
+    }
   };
+
+  // Debounced search for filter mode
+  React.useEffect(() => {
+    if (isFilterMode && onSearch) {
+      const timer = setTimeout(() => {
+        onSearch(localSearch);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [localSearch, isFilterMode, onSearch]);
 
   const handleClearSearch = () => {
     setLocalSearch("");
@@ -179,66 +229,136 @@ export function Navbar({ onSearch, searchValue, searchItems = [] }: NavbarProps)
 
           {/* Search Suggestions Dropdown */}
           <AnimatePresence>
-            {showSuggestions && suggestions.length > 0 && (
+            {showSuggestions && searchItems.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className="absolute top-full left-0 right-0 mt-2 bg-popover border rounded-lg shadow-xl overflow-hidden z-50"
               >
-                <div className="p-2 max-h-[400px] overflow-y-auto">
-                  {suggestions.map((item, index) => {
-                    const Icon = getCategoryIcon(item.type);
-                    return (
-                      <motion.a
-                        key={item.fullName}
-                        href={`/repo?owner=${encodeURIComponent(item.owner)}&name=${encodeURIComponent(item.repo)}`}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => setShowSuggestions(false)}
-                        className="flex items-start gap-3 p-3 rounded-md hover:bg-accent transition-colors group"
-                        title={`View ${item.name} details`}
-                      >
-                        <div className={cn(
-                          "p-2 rounded-md shrink-0",
-                          item.type === "package" 
-                            ? "bg-blue-500/10 text-blue-500" 
-                            : "bg-green-500/10 text-green-500"
-                        )}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm truncate">{item.name}</span>
-                            <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
-                              {item.type}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {item.description}
-                          </p>
-                          <p className="text-xs text-muted-foreground/70 mt-0.5">
-                            by {item.owner}
-                          </p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-2" />
-                      </motion.a>
-                    );
-                  })}
+                {/* Type Filter Tabs */}
+                <div className="flex items-center gap-1 p-2 border-b bg-muted/30">
+                  <span className="text-xs text-muted-foreground mr-2">
+                    <Filter className="w-3 h-3 inline mr-1" />
+                    Filter:
+                  </span>
+                  <Button
+                    variant={typeFilter === "all" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setTypeFilter("all")}
+                    className="h-6 text-xs px-2"
+                  >
+                    All ({searchItems.length})
+                  </Button>
+                  <Button
+                    variant={typeFilter === "package" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setTypeFilter("package")}
+                    className="h-6 text-xs px-2"
+                  >
+                    <Package className="w-3 h-3 mr-1" />
+                    Packages ({searchItems.filter(i => i.type === "package").length})
+                  </Button>
+                  <Button
+                    variant={typeFilter === "application" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setTypeFilter("application")}
+                    className="h-6 text-xs px-2"
+                  >
+                    <Cpu className="w-3 h-3 mr-1" />
+                    Apps ({searchItems.filter(i => i.type === "application").length})
+                  </Button>
                 </div>
-                {localSearch && (
-                  <div className="border-t p-2">
-                    <a
-                      href={`/search?q=${encodeURIComponent(localSearch)}`}
-                      className="flex items-center justify-center gap-2 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                      title={`Search all for "${localSearch}"`}
-                    >
-                      <Search className="w-4 h-4" />
-                      Search all for "{localSearch}"
-                    </a>
+
+                {/* Results */}
+                <div className="p-2 max-h-[400px] overflow-y-auto">
+                  {suggestions.length > 0 ? (
+                    suggestions.map((item, index) => {
+                      const Icon = getCategoryIcon(item.type);
+                      return (
+                        <motion.a
+                          key={item.fullName}
+                          href={`/repo?owner=${encodeURIComponent(item.owner)}&name=${encodeURIComponent(item.repo)}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.02 }}
+                          onClick={() => setShowSuggestions(false)}
+                          className="flex items-start gap-3 p-3 rounded-md hover:bg-accent transition-colors group"
+                          title={`View ${item.name} details`}
+                        >
+                          <div className={cn(
+                            "p-2 rounded-md shrink-0",
+                            item.type === "package" 
+                              ? "bg-blue-500/10 text-blue-500" 
+                              : "bg-green-500/10 text-green-500"
+                          )}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm truncate">{item.name}</span>
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                {item.type}
+                              </Badge>
+                              {item.category && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {item.category}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {item.description}
+                            </p>
+                            <p className="text-xs text-muted-foreground/70 mt-0.5">
+                              by {item.owner}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-2" />
+                        </motion.a>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      No {typeFilter === "all" ? "items" : typeFilter + "s"} found
+                      {localSearch && ` matching "${localSearch}"`}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="border-t p-2 bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    {localSearch ? (
+                      <a
+                        href={`/search?q=${encodeURIComponent(localSearch)}`}
+                        className="flex items-center justify-center gap-2 flex-1 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                        title={`Search all for "${localSearch}"`}
+                      >
+                        <Search className="w-4 h-4" />
+                        View all results for "{localSearch}"
+                      </a>
+                    ) : (
+                      <>
+                        <a
+                          href="/packages"
+                          className="flex items-center justify-center gap-2 flex-1 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                          title="Browse all packages"
+                        >
+                          <Package className="w-4 h-4" />
+                          Browse Packages
+                        </a>
+                        <a
+                          href="/applications"
+                          className="flex items-center justify-center gap-2 flex-1 p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                          title="Browse all applications"
+                        >
+                          <Cpu className="w-4 h-4" />
+                          Browse Applications
+                        </a>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

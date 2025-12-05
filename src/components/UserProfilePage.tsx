@@ -630,17 +630,17 @@ function UserHeaderSkeleton() {
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-linear-to-br from-primary/20 via-purple-500/10 to-blue-500/15" />
       </div>
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-8">
-          <Skeleton className="w-36 h-36 rounded-full" />
-          <div className="flex-1 text-center lg:text-left">
-            <Skeleton className="h-10 w-48 mx-auto lg:mx-0 mb-2" />
-            <Skeleton className="h-6 w-32 mx-auto lg:mx-0 mb-4" />
-            <Skeleton className="h-5 w-full max-w-md mx-auto lg:mx-0 mb-6" />
-            <div className="flex flex-wrap justify-center lg:justify-start gap-8">
-              <Skeleton className="h-14 w-24" />
-              <Skeleton className="h-14 w-24" />
-              <Skeleton className="h-14 w-24" />
+      <div className="container mx-auto px-4 py-8 sm:py-12 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-8">
+          <Skeleton className="w-24 h-24 sm:w-36 sm:h-36 rounded-full shrink-0" />
+          <div className="flex-1 text-center lg:text-left w-full">
+            <Skeleton className="h-8 sm:h-10 w-32 sm:w-48 mx-auto lg:mx-0 mb-2" />
+            <Skeleton className="h-5 sm:h-6 w-24 sm:w-32 mx-auto lg:mx-0 mb-3 sm:mb-4" />
+            <Skeleton className="h-4 sm:h-5 w-full max-w-[280px] sm:max-w-md mx-auto lg:mx-0 mb-4 sm:mb-6" />
+            <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-8">
+              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
+              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
+              <Skeleton className="h-12 sm:h-14 w-20 sm:w-24" />
             </div>
           </div>
         </div>
@@ -651,40 +651,40 @@ function UserHeaderSkeleton() {
 
 function UserContentSkeleton() {
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+    <section className="container mx-auto px-4 py-6 sm:py-8">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
+            <CardHeader className="pb-2 sm:pb-6">
+              <Skeleton className="h-5 sm:h-6 w-36 sm:w-48" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-[150px] w-full" />
+              <Skeleton className="h-[100px] sm:h-[150px] w-full" />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
+            <CardHeader className="pb-2 sm:pb-6">
+              <Skeleton className="h-5 sm:h-6 w-24 sm:w-32" />
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
+            <CardContent className="space-y-2 sm:space-y-3">
+              <Skeleton className="h-16 sm:h-20 w-full" />
+              <Skeleton className="h-16 sm:h-20 w-full" />
             </CardContent>
           </Card>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 order-first lg:order-last">
           <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-20" />
+            <CardHeader className="pb-2 sm:pb-6">
+              <Skeleton className="h-5 sm:h-6 w-16 sm:w-20" />
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 sm:h-4 w-28 sm:w-32" />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 sm:h-4 w-24 sm:w-28" />
               </div>
             </CardContent>
           </Card>
